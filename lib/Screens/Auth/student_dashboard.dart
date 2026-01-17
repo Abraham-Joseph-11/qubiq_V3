@@ -1,38 +1,32 @@
 // lib/Screens/Auth/student_dashboard.dart
 
 import 'dart:async';
-import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:little_emmi/Screens/TeachableMachine/robot_screen.dart';
 import 'package:path/path.dart' as p;
-import 'package:flutter/foundation.dart';
 import 'dart:io' show Platform;
 import 'package:process_run/shell.dart';
 
 // ✅ Firebase & Connectivity Imports
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:http/http.dart' as http;
 
-// ✅ Import Responsive Helper
-import 'package:little_emmi/Utils/responsive_layout.dart';
-
-// Import screens
-import 'package:little_emmi/Screens/Dashboard/dashboard_screen.dart';
+// ✅ Import Screens
 import 'package:little_emmi/Screens/flowchart_ide_screen.dart';
 import 'package:little_emmi/Screens/python_ide_screen.dart';
 import 'package:little_emmi/Screens/inappwebview_screen.dart';
-import 'package:little_emmi/Screens/adaptive_quiz_demo.dart';
 import 'package:little_emmi/Screens/MIT/mit_dashboard_screen.dart';
-import 'package:little_emmi/Screens/GenAI/gen_ai_hub_screen.dart';
+import 'package:little_emmi/Screens/ai_chat_screen.dart';
 import 'package:little_emmi/Screens/ar_dashboard.dart';
 import 'package:little_emmi/Screens/Auth/login_screen.dart';
+// ✅ Added Custom GenAI Screens
+import 'package:little_emmi/Screens/GenAI/image_gen_screen.dart';
+import 'package:little_emmi/Screens/GenAI/music_gen_screen.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -44,10 +38,8 @@ class StudentDashboardScreen extends StatefulWidget {
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   String _userName = "Student";
   final String _studentClass = "Class 5-A";
-
-  // ✅ Connectivity State
   Timer? _internetCheckTimer;
-  bool _isOffline = false; // CHANGED: Simple boolean instead of dialog state
+  bool _isOffline = false;
 
   @override
   void initState() {
@@ -64,23 +56,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     super.dispose();
   }
 
-  // ✅ CHANGED: Logic now updates a boolean variable instead of showing/popping dialogs
   Future<void> _verifyRealInternet() async {
     try {
       final response = await http.get(Uri.parse('https://www.google.com')).timeout(const Duration(seconds: 2));
       if (response.statusCode == 200) {
-        if (_isOffline) {
-          if (mounted) setState(() => _isOffline = false); // Auto-hide when back online
-        }
+        if (_isOffline && mounted) setState(() => _isOffline = false);
       }
     } catch (e) {
-      if (!_isOffline) {
-        if (mounted) setState(() => _isOffline = true); // Show corner popup
-      }
+      if (!_isOffline && mounted) setState(() => _isOffline = true);
     }
   }
-
-  // ❌ REMOVED: _showOfflineModePopup and _showCustomPopup (No longer needed)
 
   Future<void> _launchEmmiV2App() async {
     try {
@@ -88,9 +73,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       var shell = Shell(workingDirectory: appDirectory);
       await shell.run('EmmiV2.exe');
     } catch (e) {
-      // We can use a simple SnackBar for this error now, or a similar corner popup logic
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Launch Error: EmmiV2.exe not found"), backgroundColor: Colors.red),
+        const SnackBar(content: Text("Launch Error: EmmiV2.exe not found"), backgroundColor: Colors.red),
       );
     }
   }
@@ -103,7 +87,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         if (doc.exists && doc.data() != null && doc.data()!.containsKey('name')) {
           if (mounted) setState(() => _userName = doc.get('name'));
         }
-      } catch (e) { debugPrint("Error fetching name: $e"); }
+      } catch (e) { debugPrint("Error: $e"); }
     }
   }
 
@@ -111,60 +95,96 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 800;
 
-    // 1. CODING LAB
-    final List<DashboardItem> codingApps = [
-      DashboardItem(title: 'Flowchart', subtitle: 'Visual Logic', icon: Icons.account_tree_outlined, accentColor: Colors.orange, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FlowchartIdeScreen()))),
-      DashboardItem(title: 'Python IDE', subtitle: 'Code Editor', icon: Icons.code_outlined, accentColor: Colors.amber.shade700, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PythonIdeScreen()))),
-      DashboardItem(title: 'Mobile Apps', subtitle: 'Block Coding', icon: Icons.extension_outlined, accentColor: Colors.green, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MitDashboardScreen()))),
+    // 1. AI LEARNING APPS
+    final List<DashboardItem> aiLearningApps = [
+      DashboardItem(
+          title: 'Suno AI',
+          subtitle: 'Music Creation',
+          imagePath: 'assets/images/suno.png',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://suno.com', title: 'Suno AI')))
+      ),
+      DashboardItem(
+          title: 'Neural Chat',
+          subtitle: 'QubiQAI Assistant',
+          imagePath: 'assets/images/chatai.png',
+          // ✅ Keeps Neural Chat
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AiChatScreen()))
+      ),
+      DashboardItem(
+          title: 'Vision Forge',
+          subtitle: 'AI Image Gen',
+          imagePath: 'assets/images/imagegen.png',
+          // ✅ Updated: Opens Custom ImageGenScreen
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ImageGenScreen()))
+      ),
+      DashboardItem(
+          title: 'Sonic Lab',
+          subtitle: 'AI Sound FX',
+          imagePath: 'assets/images/soundgen.png',
+          // ✅ Updated: Opens Custom MusicGenScreen
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MusicGenScreen()))
+      ),
     ];
 
-    // 2. ROBOTICS & AI
+    // 2. TEACHABLE MACHINE APPS
+    final List<DashboardItem> teachableApps = [
+      DashboardItem(
+          title: 'Image Model',
+          subtitle: 'Vision Training',
+          imagePath: 'assets/images/imgnobgnew.png',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://teachablemachine.withgoogle.com/train/image', title: 'Train Image Model')))
+      ),
+      DashboardItem(
+          title: 'Audio Model',
+          subtitle: 'Sound Training',
+          imagePath: 'assets/images/soundmachinenobg.png',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://teachablemachine.withgoogle.com/train/audio', title: 'Train Audio Model')))
+      ),
+      DashboardItem(
+          title: 'Pose Model',
+          subtitle: 'Body Tracking',
+          imagePath: 'assets/images/posemodelnobg.png',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://teachablemachine.withgoogle.com/train/pose', title: 'Train Pose Model')))
+      ),
+    ];
+
+    // 3. ROBOTICS APPS
     final List<DashboardItem> roboticsApps = [
-      DashboardItem(title: 'Teach Robot', subtitle: 'Train AI', icon: Icons.model_training_rounded, accentColor: Colors.deepOrangeAccent, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RobotScreen()))),
-      DashboardItem(title: 'Generative AI', subtitle: 'QubiQAI Suite', icon: Icons.auto_awesome, accentColor: Colors.purple, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const GenAIHubScreen()))),
-      DashboardItem(title: 'Suno AI Music', subtitle: 'Create Songs', icon: Icons.music_note_rounded, accentColor: Colors.pink, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://suno.com', title: 'Suno AI Music')))),
-      if (Platform.isWindows) DashboardItem(title: 'Emmi Core', subtitle: 'Robot Manager', icon: Icons.apps_outage_rounded, accentColor: Colors.blue, onTap: _launchEmmiV2App),
+      if (Platform.isWindows) DashboardItem(title: 'Emmi Core', subtitle: 'Robot Manager', imagePath: 'assets/images/emmi.png', onTap: _launchEmmiV2App),
+      DashboardItem(title: 'Little Emmi', subtitle: 'Robot Learning', imagePath: 'assets/images/littleemmi.png', onTap: () => Navigator.pushNamed(context, '/app/robot_workspace')),
     ];
 
-    // 3. IMMERSIVE LEARNING
-    final List<DashboardItem> learningApps = [
-      DashboardItem(title: 'Little Emmi', subtitle: 'Learning', icon: Icons.child_care_outlined, accentColor: Colors.teal, onTap: () => Navigator.pushNamed(context, '/app/robot_workspace')),
-      DashboardItem(title: 'Adaptive Quiz', subtitle: 'Practice', icon: Icons.psychology_outlined, accentColor: Colors.deepPurple, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdaptiveLearningMenu()))),
-      DashboardItem(title: 'AR Learning', subtitle: '3D Science', icon: Icons.view_in_ar, accentColor: Colors.pinkAccent, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ARDashboard()))),
-      DashboardItem(title: 'Assemblr Edu', subtitle: '3D EduKits', icon: Icons.layers_outlined, accentColor: Colors.cyan, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://edu.assemblrworld.com/edukits', title: 'Assemblr EduKits')))),
+    // 4. MOBILE APP
+    final List<DashboardItem> mobileApps = [
+      DashboardItem(title: 'App Development Learning', subtitle: 'MIT Blocks', imagePath: 'assets/images/mitnobg.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MitDashboardScreen()))),
     ];
 
-    // 4. PRODUCTIVITY (Separated Apps)
-    final List<DashboardItem> productivityApps = [
+    // 5. CODING APPS
+    final List<DashboardItem> codingApps = [
+      DashboardItem(title: 'Flowchart Py', subtitle: 'Visual Python', imagePath: 'assets/images/pyflownobg.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FlowchartIdeScreen()))),
+      DashboardItem(title: 'Flowchart Java', subtitle: 'Visual Java', imagePath: 'assets/images/javaflownobg.png', onTap: () {}),
+      DashboardItem(title: 'Python IDE', subtitle: 'Code Editor', imagePath: 'assets/images/python.jpg', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PythonIdeScreen()))),
+      DashboardItem(title: 'Java IDE', subtitle: 'Professional', imagePath: 'assets/images/java.jpg', onTap: () {}),
+    ];
+
+    // 6. AUGMENTED REALITY
+    final List<DashboardItem> arApps = [
+      DashboardItem(title: 'AR Learning', subtitle: '3D Exploration', imagePath: 'assets/images/ar.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ARDashboard()))),
       DashboardItem(
-          title: 'Microsoft Word',
-          subtitle: 'Documents',
-          icon: Icons.description_outlined,
-          accentColor: Colors.blue[700]!,
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://www.microsoft365.com/launch/word', title: 'Microsoft Word')))
-      ),
-      DashboardItem(
-          title: 'Microsoft Excel',
-          subtitle: 'Spreadsheets',
-          icon: Icons.table_chart_outlined,
-          accentColor: Colors.green[700]!,
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://www.microsoft365.com/launch/excel', title: 'Microsoft Excel')))
-      ),
-      DashboardItem(
-          title: 'PowerPoint',
-          subtitle: 'Presentations',
-          icon: Icons.slideshow_outlined,
-          accentColor: Colors.orange[800]!,
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://www.microsoft365.com/launch/powerpoint', title: 'Microsoft PowerPoint')))
+          title: 'Assemblr EDU',
+          subtitle: 'AR Studio',
+          imagePath: 'assets/images/edu.jpg',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://edu.assemblrworld.com/en/edukits', title: 'Assemblr EDU')))
       ),
     ];
 
-    // Define Categories for UI
     final List<_CategoryTile> categories = [
-      _CategoryTile(name: "Coding Lab", icon: Icons.code_rounded, color: Colors.orange, items: codingApps),
-      _CategoryTile(name: "Robotics & AI", icon: Icons.smart_toy_rounded, color: Colors.purple, items: roboticsApps),
-      _CategoryTile(name: "Immersive Learning", icon: Icons.school_rounded, color: Colors.teal, items: learningApps),
-      _CategoryTile(name: "Productivity", icon: Icons.work_rounded, color: Colors.indigo, items: productivityApps),
+      _CategoryTile(name: "AI Learning", color: Colors.blue, items: aiLearningApps),
+      _CategoryTile(name: "Teachable Machine", color: Colors.orange, items: teachableApps),
+      _CategoryTile(name: "Robotics", color: Colors.teal, items: roboticsApps),
+      _CategoryTile(name: "Mobile App", color: Colors.green, items: mobileApps),
+      _CategoryTile(name: "Coding", color: Colors.amber, items: codingApps),
+      _CategoryTile(name: "Augmented Reality", color: Colors.pinkAccent, items: arApps),
     ];
 
     return Scaffold(
@@ -180,11 +200,15 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 children: [
                   _buildHeader(context),
                   const SizedBox(height: 30),
+
+                  // Progress & Stats
                   if (isMobile) Column(children: [_buildGlassProgressCard(), const SizedBox(height: 16), _buildStatsGrid(isMobile)])
                   else Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: 3, child: _buildGlassProgressCard()), const SizedBox(width: 20), Expanded(flex: 5, child: _buildStatsGrid(isMobile))]),
 
                   const SizedBox(height: 30),
-                  Text("Pending Assignments", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey[800])),
+
+                  // Assignments Section
+                  Text("Experiments", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey[800])),
                   const SizedBox(height: 16),
                   StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance.collection('assignments').where('className', isEqualTo: _studentClass).orderBy('dueDate', descending: false).snapshots(),
@@ -200,134 +224,18 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   ),
 
                   const SizedBox(height: 30),
+
                   // App Categories
-                  ...categories.map((category) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Category Header
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                    color: category.color.withOpacity(0.1),
-                                    shape: BoxShape.circle
-                                ),
-                                child: Icon(category.icon, color: category.color, size: 24),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                  category.name,
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blueGrey[800]
-                                  )
-                              ),
-                            ],
-                          ),
-                        ),
-                        // App Grid
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: isMobile ? 3 : 5, // Responsive columns
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 0.85,
-                          ),
-                          itemCount: category.items.length,
-                          itemBuilder: (context, index) {
-                            return _GlassAppCard(item: category.items[index], isPopup: false);
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                    );
-                  }),
+                  ...categories.map((category) => _buildCategorySection(category, isMobile)),
                   const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
-
-          // ✅ NEW: Non-intrusive Corner Notification
-          Positioned(
-            bottom: 24,
-            right: 24,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
-              transitionBuilder: (child, animation) => SlideTransition(
-                position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(animation),
-                child: child,
-              ),
-              child: _isOffline
-                  ? Container(
-                width: 300,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent.withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(color: Colors.redAccent.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 5))
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
-                      child: const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "Connection Lost",
-                            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                          Text(
-                            "You can still use Flowchart and Python IDE.",
-                            style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 11),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  : const SizedBox.shrink(), // Hides completely when online
-            ),
-          ),
+          _buildOfflineBanner(),
         ],
       ),
     );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Student Portal", style: GoogleFonts.poppins(fontSize: 14, color: Colors.blueGrey[500], fontWeight: FontWeight.w600)), Text("Welcome, $_userName", style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]), softWrap: true, maxLines: 2)])),
-        const SizedBox(width: 16),
-        Container(
-          decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
-          child: IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-            onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen())),
-          ),
-        ),
-      ],
-    ).animate().fadeIn().slideY(begin: -0.2);
   }
 
   Widget _buildRealProjectTile(BuildContext context, Map<String, dynamic> data, String docId) {
@@ -352,32 +260,110 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     ).animate().fadeIn().slideX();
   }
 
+  Widget _buildCategorySection(_CategoryTile category, bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4.0, bottom: 16.0),
+          child: Row(
+            children: [
+              Container(width: 4, height: 24, decoration: BoxDecoration(color: category.color, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(width: 10),
+              Text(category.name, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey[800])),
+            ],
+          ),
+        ),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isMobile ? 3 : 5,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 20,
+            childAspectRatio: 0.8,
+          ),
+          itemCount: category.items.length,
+          itemBuilder: (context, index) => _ImageAppCard(item: category.items[index]),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildOfflineBanner() {
+    return Positioned(
+      bottom: 24, right: 24,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        child: _isOffline ? Container(
+          width: 300, padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.95), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.redAccent.withOpacity(0.3), blurRadius: 20)]),
+          child: Row(children: [
+            const Icon(Icons.wifi_off_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Text("Offline Mode", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+              Text("Using local assets.", style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 11)),
+            ])),
+          ]),
+        ) : const SizedBox.shrink(),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text("Student Portal", style: GoogleFonts.poppins(fontSize: 14, color: Colors.blueGrey[500], fontWeight: FontWeight.w600)),
+          Text("Welcome, $_userName", style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
+        ]),
+        IconButton(
+          icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+          onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen())),
+        ),
+      ],
+    ).animate().fadeIn();
+  }
+
   Widget _buildGlassProgressCard() {
     return Container(
-      padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: Colors.white.withOpacity(0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white, width: 2), boxShadow: [BoxShadow(color: Colors.indigo.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))]),
-      child: Column(children: [CircularPercentIndicator(radius: 45.0, lineWidth: 8.0, animation: true, percent: 0.75, center: Text("75%", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18.0, color: Colors.indigo)), circularStrokeCap: CircularStrokeCap.round, progressColor: Colors.indigoAccent, backgroundColor: Colors.indigo.withOpacity(0.1)), const SizedBox(height: 16), Text("Overall Progress", style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])), Text("Keep it up!", style: GoogleFonts.poppins(fontSize: 12, color: Colors.blueGrey[500]))]),
-    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2);
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white, width: 2)),
+      child: Column(children: [
+        CircularPercentIndicator(radius: 45.0, lineWidth: 8.0, percent: 0.75, center: const Text("75%"), progressColor: Colors.indigoAccent),
+        const SizedBox(height: 12),
+        Text("Weekly Progress", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+      ]),
+    );
   }
 
   Widget _buildStatsGrid(bool isMobile) {
-    return GridView.count(crossAxisCount: isMobile ? 2 : 4, crossAxisSpacing: 12, mainAxisSpacing: 12, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), childAspectRatio: 1.0, children: [_buildStatTile("Projects", "12", Icons.folder_copy_outlined, Colors.blue), _buildStatTile("Tests", "5/6", Icons.assignment_turned_in_outlined, Colors.green), _buildStatTile("Pending", "2", Icons.hourglass_top_outlined, Colors.orange), _buildStatTile("Rank", "#4", Icons.emoji_events_outlined, Colors.purple)]).animate().fadeIn(delay: 100.ms);
+    return GridView.count(
+      crossAxisCount: isMobile ? 2 : 4,
+      crossAxisSpacing: 12, mainAxisSpacing: 12,
+      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+      children: [
+        _buildStatTile("Projects", "12", Icons.folder_outlined, Colors.blue),
+        _buildStatTile("Tests", "5/6", Icons.assignment_outlined, Colors.green),
+        _buildStatTile("Pending", "2", Icons.hourglass_empty, Colors.orange),
+        _buildStatTile("Rank", "#4", Icons.emoji_events_outlined, Colors.purple),
+      ],
+    );
   }
 
   Widget _buildStatTile(String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)]),
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: color, size: 20), const SizedBox(height: 8), Text(value, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])), Text(title, style: GoogleFonts.poppins(fontSize: 11, color: Colors.blueGrey[500]))]),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(16)),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Icon(icon, color: color, size: 20),
+        Text(value, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(title, style: GoogleFonts.poppins(fontSize: 11, color: Colors.blueGrey[500])),
+      ]),
     );
   }
-}
-
-// ✅ HELPER CLASS FOR CATEGORIES
-class _CategoryTile {
-  final String name;
-  final IconData icon;
-  final Color color;
-  final List<DashboardItem> items;
-  _CategoryTile({required this.name, required this.icon, required this.color, required this.items});
 }
 
 class AssignmentDetailScreen extends StatelessWidget {
@@ -394,6 +380,8 @@ class AssignmentDetailScreen extends StatelessWidget {
     else if (toolName.contains("App Inventor") || toolName.contains("Mobile")) Navigator.push(context, MaterialPageRoute(builder: (context) => const MitDashboardScreen()));
     else if (toolName.contains("Little Emmi")) Navigator.pushNamed(context, '/app/robot_workspace');
     else if (toolName.contains("AR") || toolName.contains("3D")) Navigator.push(context, MaterialPageRoute(builder: (context) => ARDashboard()));
+    else if (toolName.contains("Vision") || toolName.contains("Image")) Navigator.push(context, MaterialPageRoute(builder: (context) => const ImageGenScreen()));
+    else if (toolName.contains("Sonic") || toolName.contains("Sound")) Navigator.push(context, MaterialPageRoute(builder: (context) => const MusicGenScreen()));
     else _showInfoPopup(context, "Manual Start Required", "The tool '$toolName' is not integrated for auto-launch. Please open it from the dashboard.");
   }
   @override
@@ -404,56 +392,67 @@ class AssignmentDetailScreen extends StatelessWidget {
   }
 }
 
-class _GlassAppCard extends StatelessWidget {
+class _CategoryTile {
+  final String name;
+  final Color color;
+  final List<DashboardItem> items;
+  _CategoryTile({required this.name, required this.color, required this.items});
+}
+
+class _ImageAppCard extends StatelessWidget {
   final DashboardItem item;
-  final bool isPopup;
-  const _GlassAppCard({required this.item, this.isPopup = false});
+  const _ImageAppCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        if(isPopup) Navigator.pop(context); // Close dialog
-        item.onTap();
-      },
+      onTap: item.onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.8),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isPopup ? Colors.grey.shade200 : Colors.white, width: 2),
+          border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: item.accentColor.withOpacity(0.1),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             )
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: item.accentColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.white,
+                ),
+                child: Image.asset(
+                  item.imagePath,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
+                ),
               ),
-              child: Icon(item.icon, color: item.accentColor, size: 20),
             ),
-            const Spacer(),
+            const SizedBox(height: 12),
             Text(
               item.title,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]),
             ),
+            const SizedBox(height: 2),
             Text(
               item.subtitle,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(fontSize: 10, color: Colors.blueGrey[400]),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(fontSize: 10, color: Colors.blueGrey[400]),
             ),
           ],
         ),
@@ -462,21 +461,24 @@ class _GlassAppCard extends StatelessWidget {
   }
 }
 
-class PastelAnimatedBackground extends StatefulWidget { const PastelAnimatedBackground({super.key}); @override State<PastelAnimatedBackground> createState() => _PastelAnimatedBackgroundState(); }
-class _PastelAnimatedBackgroundState extends State<PastelAnimatedBackground> { late Timer timer; final Random random = Random(); double top1 = 0.1, left1 = 0.1, top2 = 0.5, left2 = 0.5; @override void initState() { super.initState(); timer = Timer.periodic(const Duration(seconds: 5), (timer) { if (mounted) setState(() { top1 = random.nextDouble(); left1 = random.nextDouble(); top2 = random.nextDouble(); left2 = random.nextDouble(); }); }); } @override void dispose() { timer.cancel(); super.dispose(); } @override Widget build(BuildContext context) { final size = MediaQuery.of(context).size; return ClipRect(child: Stack(children: [AnimatedPositioned(duration: const Duration(seconds: 5), curve: Curves.easeInOut, top: top1 * (size.height - 200), left: left1 * (size.width - 200), child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.blue.withOpacity(0.15)))), AnimatedPositioned(duration: const Duration(seconds: 5), curve: Curves.easeInOut, top: top2 * (size.height - 200), left: left2 * (size.width - 200), child: Container(width: 250, height: 250, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.purple.withOpacity(0.15)))), BackdropFilter(filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50), child: Container(color: Colors.white.withOpacity(0.1)))])); } }
-
 class DashboardItem {
   final String title;
   final String subtitle;
-  final IconData icon;
-  final Color accentColor;
+  final String imagePath;
   final VoidCallback onTap;
 
   DashboardItem({
     required this.title,
     required this.subtitle,
-    required this.icon,
-    required this.accentColor,
+    required this.imagePath,
     required this.onTap,
   });
+}
+
+class PastelAnimatedBackground extends StatelessWidget {
+  const PastelAnimatedBackground({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Container(color: const Color(0xFFF8FAFC));
+  }
 }

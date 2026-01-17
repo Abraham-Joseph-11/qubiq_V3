@@ -124,6 +124,8 @@ flutter:
     - assets/images/qubiq_logo.png
     - assets/curriculum.json
     - assets/mobilenet_feature.tflite
+    - assets/images/chatai.png
+    - assets/images/
 
   #   - images/a_dot_ham.jpeg
 
