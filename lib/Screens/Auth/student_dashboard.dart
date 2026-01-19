@@ -24,9 +24,10 @@ import 'package:little_emmi/Screens/MIT/mit_dashboard_screen.dart';
 import 'package:little_emmi/Screens/ai_chat_screen.dart';
 import 'package:little_emmi/Screens/ar_dashboard.dart';
 import 'package:little_emmi/Screens/Auth/login_screen.dart';
-// ✅ Added Custom GenAI Screens
 import 'package:little_emmi/Screens/GenAI/image_gen_screen.dart';
 import 'package:little_emmi/Screens/GenAI/music_gen_screen.dart';
+import 'package:little_emmi/Screens/Help/help_chat_screen.dart';
+import 'package:little_emmi/Screens/adaptive_quiz_demo.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -91,11 +92,80 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     }
   }
 
+  // ✅ Cool "Coming Soon" Popup
+  void _showComingSoon(BuildContext context, String featureName) {
+    showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 20, spreadRadius: 5),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.orangeAccent.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.construction_rounded, size: 50, color: Colors.orangeAccent),
+                ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+                const SizedBox(height: 20),
+                Text(
+                  "Coming Soon!",
+                  style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]),
+                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.5),
+                const SizedBox(height: 10),
+                Text(
+                  "$featureName is currently under development. Stay tuned for updates!",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.blueGrey[600]),
+                ).animate().fadeIn(delay: 400.ms),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orangeAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  ),
+                  child: Text("Got it", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                ).animate().fadeIn(delay: 600.ms),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 800;
 
-    // 1. AI LEARNING APPS
+    // 1. ADAPTIVE LEARNING
+    final List<DashboardItem> quizApps = [
+      DashboardItem(
+          title: 'Smart Quiz',
+          subtitle: 'Adaptive Levels',
+          imagePath: 'assets/images/quiz.png',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdaptiveLearningMenu()))
+      ),
+    ];
+
+    // 2. AI LEARNING APPS
     final List<DashboardItem> aiLearningApps = [
       DashboardItem(
           title: 'Suno AI',
@@ -107,26 +177,23 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           title: 'Neural Chat',
           subtitle: 'QubiQAI Assistant',
           imagePath: 'assets/images/chatai.png',
-          // ✅ Keeps Neural Chat
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AiChatScreen()))
       ),
       DashboardItem(
           title: 'Vision Forge',
           subtitle: 'AI Image Gen',
           imagePath: 'assets/images/imagegen.png',
-          // ✅ Updated: Opens Custom ImageGenScreen
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ImageGenScreen()))
       ),
       DashboardItem(
           title: 'Sonic Lab',
           subtitle: 'AI Sound FX',
           imagePath: 'assets/images/soundgen.png',
-          // ✅ Updated: Opens Custom MusicGenScreen
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MusicGenScreen()))
       ),
     ];
 
-    // 2. TEACHABLE MACHINE APPS
+    // 3. TEACHABLE MACHINE APPS
     final List<DashboardItem> teachableApps = [
       DashboardItem(
           title: 'Image Model',
@@ -148,26 +215,41 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       ),
     ];
 
-    // 3. ROBOTICS APPS
+    // 4. ROBOTICS APPS
     final List<DashboardItem> roboticsApps = [
       if (Platform.isWindows) DashboardItem(title: 'Emmi Core', subtitle: 'Robot Manager', imagePath: 'assets/images/emmi.png', onTap: _launchEmmiV2App),
       DashboardItem(title: 'Little Emmi', subtitle: 'Robot Learning', imagePath: 'assets/images/littleemmi.png', onTap: () => Navigator.pushNamed(context, '/app/robot_workspace')),
     ];
 
-    // 4. MOBILE APP
+    // 5. MOBILE APP
     final List<DashboardItem> mobileApps = [
       DashboardItem(title: 'App Development Learning', subtitle: 'MIT Blocks', imagePath: 'assets/images/mitnobg.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MitDashboardScreen()))),
     ];
 
-    // 5. CODING APPS
+    // 6. CODING APPS
     final List<DashboardItem> codingApps = [
       DashboardItem(title: 'Flowchart Py', subtitle: 'Visual Python', imagePath: 'assets/images/pyflownobg.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FlowchartIdeScreen()))),
-      DashboardItem(title: 'Flowchart Java', subtitle: 'Visual Java', imagePath: 'assets/images/javaflownobg.png', onTap: () {}),
+
+      // ✅ "Coming Soon" Popup
+      DashboardItem(
+          title: 'Flowchart Java',
+          subtitle: 'Visual Java',
+          imagePath: 'assets/images/javaflownobg.png',
+          onTap: () => _showComingSoon(context, "Flowchart Java")
+      ),
+
       DashboardItem(title: 'Python IDE', subtitle: 'Code Editor', imagePath: 'assets/images/python.jpg', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PythonIdeScreen()))),
-      DashboardItem(title: 'Java IDE', subtitle: 'Professional', imagePath: 'assets/images/java.jpg', onTap: () {}),
+
+      // ✅ "Coming Soon" Popup
+      DashboardItem(
+          title: 'Java IDE',
+          subtitle: 'Professional',
+          imagePath: 'assets/images/java.jpg',
+          onTap: () => _showComingSoon(context, "Professional Java IDE")
+      ),
     ];
 
-    // 6. AUGMENTED REALITY
+    // 7. AUGMENTED REALITY
     final List<DashboardItem> arApps = [
       DashboardItem(title: 'AR Learning', subtitle: '3D Exploration', imagePath: 'assets/images/ar.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ARDashboard()))),
       DashboardItem(
@@ -179,6 +261,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     ];
 
     final List<_CategoryTile> categories = [
+      _CategoryTile(name: "Adaptive Learning", color: Colors.deepPurpleAccent, items: quizApps),
       _CategoryTile(name: "AI Learning", color: Colors.blue, items: aiLearningApps),
       _CategoryTile(name: "Teachable Machine", color: Colors.orange, items: teachableApps),
       _CategoryTile(name: "Robotics", color: Colors.teal, items: roboticsApps),
@@ -188,7 +271,18 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.white, // ✅ SCAFFOLD IS NOW WHITE
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const HelpChatScreen()),
+          );
+        },
+        backgroundColor: Colors.deepPurple,
+        icon: const Icon(Icons.support_agent_rounded, color: Colors.white),
+        label: const Text("Help AI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
       body: Stack(
         children: [
           const Positioned.fill(child: PastelAnimatedBackground()),
@@ -227,7 +321,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
                   // App Categories
                   ...categories.map((category) => _buildCategorySection(category, isMobile)),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 60),
                 ],
               ),
             ),
@@ -237,6 +331,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       ),
     );
   }
+
+  // --- HELPER WIDGETS ---
 
   Widget _buildRealProjectTile(BuildContext context, Map<String, dynamic> data, String docId) {
     String tool = data['tool'] ?? 'General';
@@ -278,10 +374,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isMobile ? 3 : 5,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 20,
-            childAspectRatio: 0.8,
+            // 4 columns on mobile, 7 on desktop
+            crossAxisCount: isMobile ? 4 : 7,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.75,
           ),
           itemCount: category.items.length,
           itemBuilder: (context, index) => _ImageAppCard(item: category.items[index]),
@@ -408,16 +505,16 @@ class _ImageAppCard extends StatelessWidget {
     return GestureDetector(
       onTap: item.onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(8), // ✅ Reduced padding for better proportion
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16), // Slightly tighter corners
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             )
           ],
         ),
@@ -426,23 +523,24 @@ class _ImageAppCard extends StatelessWidget {
           children: [
             Expanded(
               child: Container(
-                padding: const EdgeInsets.all(8),
+                // ✅ UPDATED: Padding increased from 20 to 34 to make icons REALLY SMALL
+                padding: const EdgeInsets.all(34),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   color: Colors.white,
                 ),
                 child: Image.asset(
                   item.imagePath,
                   fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_rounded, size: 40, color: Colors.grey),
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_rounded, size: 30, color: Colors.grey),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               item.title,
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]),
+              style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]), // ✅ Smaller Text
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -450,7 +548,7 @@ class _ImageAppCard extends StatelessWidget {
             Text(
               item.subtitle,
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(fontSize: 10, color: Colors.blueGrey[400]),
+              style: GoogleFonts.poppins(fontSize: 9, color: Colors.blueGrey[400]), // ✅ Smaller Text
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -475,10 +573,14 @@ class DashboardItem {
   });
 }
 
+// ✅ Updated to clean white background
 class PastelAnimatedBackground extends StatelessWidget {
   const PastelAnimatedBackground({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Container(color: const Color(0xFFF8FAFC));
+    return Container(
+      color: Colors.white,
+    );
   }
 }

@@ -21,7 +21,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   bool _isSending = false;
 
   // 🔑 YOUR API KEY
-  final String _apiKey = 'AIzaSyD24P7Lut1gJZEt6jAIzOk9iWQvcja5xxQ';
+  final String _apiKey = 'AIzaSyDs6wvjS3CP2dm76LjSl__cY2NZZryyGvg';
 
   // ✅ Model Name (Use 'gemini-2.0-flash-exp' if you are on the free tier and hit limits)
   final String _modelName = 'gemini-flash-latest';
