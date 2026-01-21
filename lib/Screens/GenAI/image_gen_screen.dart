@@ -1,7 +1,10 @@
-import 'dart:math';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:http/http.dart' as http;
+import 'package:little_emmi/secrets.dart';
 
 class ImageGenScreen extends StatefulWidget {
   const ImageGenScreen({super.key});
@@ -13,43 +16,134 @@ class ImageGenScreen extends StatefulWidget {
 class _ImageGenScreenState extends State<ImageGenScreen> {
   final TextEditingController _controller = TextEditingController();
 
-  // We store the URL string, not the bytes.
-  // This allows Flutter to handle the slow connection gracefully.
+  Uint8List? _imageBytes;
   String? _imageUrl;
-  int _refreshKey = 0;
   bool _isLoading = false;
+  String? _errorMessage;
 
-  void _generateImage() {
+  final String _apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+
+  // ✅ FIXED: The correct ID for FLUX.2 Klein 4B on OpenRouter
+  final String _modelId = "black-forest-labs/flux.2-klein-4b";
+
+  Future<void> _generateImage() async {
     final prompt = _controller.text.trim();
     if (prompt.isEmpty) return;
 
-    // 1. Dismiss keyboard
     FocusScope.of(context).unfocus();
-
-    // 2. Set Loading State
     setState(() {
       _isLoading = true;
-      _refreshKey++; // Forces Flutter to treat this as a NEW image
+      _errorMessage = null;
+      _imageBytes = null;
+      _imageUrl = null;
     });
 
-    // 3. Build Optimized URL
-    final int seed = Random().nextInt(1000000);
-    final encodedPrompt = Uri.encodeComponent(prompt);
+    try {
+      debugPrint("🚀 Sending request to OpenRouter ($_modelId)...");
 
-    // ✅ FIX: Standard Model + 768px (Best balance of speed/quality)
-    // We do NOT use 'http.get' here. We just set the URL.
-    final url = 'https://image.pollinations.ai/prompt/$encodedPrompt?width=768&height=768&seed=$seed&nologo=true&model=flux';
+      final response = await http.post(
+        Uri.parse(_apiUrl),
+        headers: {
+          'Authorization': 'Bearer $openRouterApiKey',
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://little-emmi.app',
+          'X-Title': 'Little Emmi',
+        },
+        body: jsonEncode({
+          "model": _modelId,
+          "messages": [
+            {
+              "role": "user",
+              "content": prompt
+            }
+          ],
+          // Critical for OpenRouter image models
+          "modalities": ["image", "text"],
+        }),
+      );
 
-    print("🚀 Loading Image from: $url");
+      debugPrint("📥 Status: ${response.statusCode}");
 
-    // 4. Update UI to trigger Image.network
-    Future.delayed(const Duration(milliseconds: 200), () {
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['choices'] != null && data['choices'].isNotEmpty) {
+          final message = data['choices'][0]['message'];
+
+          // ---------------------------------------------------------
+          // 🛡️ ROBUST PARSING (Prevents "Null" crash)
+          // ---------------------------------------------------------
+          String? foundUrl;
+
+          // Check 1: Standard 'images' array (with nested 'image_url')
+          if (message['images'] != null && (message['images'] as List).isNotEmpty) {
+            final imgObj = message['images'][0];
+            if (imgObj is Map && imgObj['image_url'] != null && imgObj['image_url']['url'] != null) {
+              foundUrl = imgObj['image_url']['url'];
+            } else if (imgObj is Map && imgObj['url'] != null) {
+              foundUrl = imgObj['url'];
+            }
+          }
+
+          // Check 2: Content string (Fallback for Base64 or markdown links)
+          if (foundUrl == null && message['content'] != null) {
+            final content = message['content'].toString();
+            if (content.contains("base64,")) {
+              foundUrl = content;
+            } else if (content.contains("http")) {
+              final match = RegExp(r'https?://\S+').firstMatch(content);
+              if (match != null) foundUrl = match.group(0);
+            }
+          }
+
+          if (foundUrl != null) {
+            _parseImage(foundUrl);
+          } else {
+            throw Exception("No valid image found in response.");
+          }
+        } else {
+          throw Exception("No 'choices' in API response");
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        final errorMsg = errorData['error']['message'] ?? 'Unknown API Error';
+        throw Exception("API Error: $errorMsg");
+      }
+    } catch (e) {
+      debugPrint("❌ Error: $e");
       if (mounted) {
         setState(() {
-          _imageUrl = url;
+          _isLoading = false;
+          _errorMessage = e.toString().replaceAll("Exception: ", "");
         });
       }
-    });
+    }
+  }
+
+  void _parseImage(String urlOrData) {
+    if (urlOrData.startsWith("data:image")) {
+      final base64String = urlOrData.split(",").last;
+      _parseBase64(base64String);
+    } else {
+      setState(() {
+        _imageUrl = urlOrData;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _parseBase64(String base64String) {
+    try {
+      final cleanString = base64String.replaceAll(RegExp(r'\s+'), '');
+      final bytes = base64Decode(cleanString);
+      setState(() {
+        _imageBytes = bytes;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("Base64 Decode Error: $e");
+      throw Exception("Failed to decode image data");
+    }
   }
 
   @override
@@ -77,8 +171,7 @@ class _ImageGenScreenState extends State<ImageGenScreen> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // 1. Placeholder (Start State)
-                    if (_imageUrl == null)
+                    if (_imageUrl == null && _imageBytes == null && !_isLoading && _errorMessage == null)
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -87,83 +180,46 @@ class _ImageGenScreenState extends State<ImageGenScreen> {
                           Text("Enter a prompt to start", style: GoogleFonts.poppins(color: Colors.white54)),
                         ],
                       ),
-
-                    // 2. The Image Widget (Handles its own loading)
-                    if (_imageUrl != null)
+                    if (_isLoading)
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const CircularProgressIndicator(color: Colors.pinkAccent),
+                            const SizedBox(height: 20),
+                            Text("Generating With QubiQ Image Generation...", style: GoogleFonts.poppins(color: Colors.white70)),
+                          ],
+                        ),
+                      ),
+                    if (_errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
+                            const SizedBox(height: 10),
+                            Text("Generation Failed", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 5),
+                            Text(_errorMessage!, textAlign: TextAlign.center, style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    if (_imageBytes != null && !_isLoading)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: Image.network(
-                          _imageUrl!,
-                          key: ValueKey(_refreshKey), // Critical for reloading
-                          fit: BoxFit.contain,
-
-                          // ✅ ADDED HEADERS: Helps bypass "Bot" blockers
-                          headers: const {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                          },
-
-                          // Loading Builder: Shows while bytes are downloading
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) {
-                              // Download Complete!
-                              // We use a post-frame callback to safely update our local state variable
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (mounted && _isLoading) setState(() => _isLoading = false);
-                              });
-                              return child.animate().fadeIn();
-                            }
-
-                            // While Downloading...
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const CircularProgressIndicator(color: Colors.pinkAccent),
-                                  const SizedBox(height: 20),
-                                  Text("Forging Vision...", style: GoogleFonts.poppins(color: Colors.white70)),
-                                ],
-                              ),
-                            );
-                          },
-
-                          // Error Builder: Handles Timeouts/429s visually
-                          errorBuilder: (context, error, stackTrace) {
-                            // Stop the loading spinner on error
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              if (mounted && _isLoading) setState(() => _isLoading = false);
-                            });
-
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.cloud_off, color: Colors.redAccent, size: 40),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    "Server Busy.\nTry a simpler prompt or wait 10s.",
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.poppins(color: Colors.white70),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  ElevatedButton.icon(
-                                    onPressed: _generateImage,
-                                    icon: const Icon(Icons.refresh),
-                                    label: const Text("Retry"),
-                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white10),
-                                  )
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                        child: Image.memory(_imageBytes!, fit: BoxFit.contain).animate().fadeIn(),
+                      ),
+                    if (_imageUrl != null && !_isLoading)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.network(_imageUrl!, fit: BoxFit.contain).animate().fadeIn(),
                       ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 20),
-
-            // Input Area
             Container(
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(

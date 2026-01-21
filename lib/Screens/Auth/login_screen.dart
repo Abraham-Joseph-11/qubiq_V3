@@ -10,9 +10,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:little_emmi/Screens/Dashboard/dashboard_screen.dart';
 import 'package:little_emmi/Screens/Auth/student_dashboard.dart';
 import 'package:little_emmi/Screens/Auth/teacher_dashboard.dart';
-import 'package:little_emmi/Screens/Dashboard/admin_dashboard.dart';
 import 'package:little_emmi/Screens/Dashboard/super_admin_dashboard.dart';
-import 'package:little_emmi/Screens/robot_launch_screen.dart'; // For Reset
+import 'package:little_emmi/Screens/robot_launch_screen.dart';
+
+// 🚀 USE THE ADMIN DASHBOARD YOU PROVIDED
+import 'package:little_emmi/Screens/Dashboard/admin_dashboard.dart';
 
 import 'package:little_emmi/Utils/responsive_layout.dart';
 
@@ -114,7 +116,6 @@ class _LittleEmmiLoginScreenState extends State<LittleEmmiLoginScreen> {
     final auth = FirebaseAuth.instance;
     final firestore = FirebaseFirestore.instance;
 
-    // Strict Education Checks
     if (!_isLogin) {
       if (!_isOtpSent) { setState(() => _errorMessage = "Verify OTP first."); return; }
       if (_otpController.text.trim() != _generatedOtp) { setState(() => _errorMessage = "Invalid OTP."); return; }
@@ -131,8 +132,12 @@ class _LittleEmmiLoginScreenState extends State<LittleEmmiLoginScreen> {
         DocumentSnapshot userDoc = await firestore.collection('users').doc(cred.user!.uid).get();
 
         if (userDoc.exists) {
-          String role = userDoc.get('role');
-          if (_emailController.text.trim() == "superadmin@qubiq.ai" || role == "super_admin") {
+          String rawRole = userDoc.get('role') ?? 'student';
+
+          // Debug Print
+          debugPrint("✅ LOGGED IN. FIREBASE ROLE: '$rawRole'");
+
+          if (_emailController.text.trim() == "superadmin@qubiq.ai" || rawRole == "super_admin") {
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SuperAdminDashboard()));
             return;
           }
@@ -144,7 +149,7 @@ class _LittleEmmiLoginScreenState extends State<LittleEmmiLoginScreen> {
               return;
             }
           }
-          _navigateByRole(role);
+          _navigateByRole(rawRole);
         }
       } else {
         // REGISTER
@@ -167,18 +172,44 @@ class _LittleEmmiLoginScreenState extends State<LittleEmmiLoginScreen> {
     } catch (e) { setState(() { _errorMessage = e.toString(); _isLoading = false; }); }
   }
 
+  // ✅ FIXED NAVIGATION LOGIC
   void _navigateByRole(String role) {
-    if (!mounted) return;
-    Widget next = (role == 'admin') ? const AdminDashboardScreen() : (role == 'teacher' ? const TeacherDashboardScreen() : (role == 'student' ? const StudentDashboardScreen() : const DashboardScreen()));
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => next));
+    debugPrint("🚨 _navigateByRole CALLED");
+    String cleanRole = role.trim().toLowerCase();
+
+    if (cleanRole == 'admin') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AdminDashboardScreen(),
+        ),
+      );
+
+    } else if (cleanRole == 'teacher') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const TeacherDashboardScreen(),
+        ),
+      );
+
+    } else {
+      // student (default)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const StudentDashboardScreen(),
+        ),
+      );
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 800;
     bool requiresOtp = !_isLogin;
 
-    // ✅ RESTORED SPLIT LAYOUT
     return Scaffold(
       body: ResponsiveLayout(
         desktopBody: Row(
@@ -199,7 +230,6 @@ class _LittleEmmiLoginScreenState extends State<LittleEmmiLoginScreen> {
     );
   }
 
-  // ✅ RESTORED BRANDING PANEL
   Widget _buildEducationBranding(bool isMobile) {
     return Container(
       decoration: BoxDecoration(color: Colors.grey[50], border: Border(right: BorderSide(color: Colors.grey.shade300))),
@@ -288,7 +318,6 @@ class _LittleEmmiLoginScreenState extends State<LittleEmmiLoginScreen> {
     );
   }
 
-  // ✅ RESTORED COOL OTP INPUT
   Widget _buildCoolOtpInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

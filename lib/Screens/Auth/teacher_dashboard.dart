@@ -9,7 +9,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:little_emmi/Services/cloudinary_service.dart';
-import 'package:little_emmi/Screens/Dashboard/dashboard_screen.dart'; // Ensure DashboardItem is defined here
+import 'package:little_emmi/Screens/Dashboard/dashboard_screen.dart';
+
+// ✅ IMPORT THE LOGIN SCREEN (Adjust path if needed)
+import 'package:little_emmi/Screens/Auth/login_screen.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -25,10 +28,15 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   File? _selectedImageFile;
   final CloudinaryService _cloudinary = CloudinaryService();
 
-  // 🏫 Dynamic Classes State
+  // 🎓 Dynamic Classes State
   List<String> _classes = [];
   bool _isLoadingClasses = true;
   int _selectedClassIndex = 0;
+
+  // 📢 BROADCAST STATE
+  final TextEditingController _noticeTitleController = TextEditingController();
+  final TextEditingController _noticeMessageController = TextEditingController();
+  bool _isSendingNotice = false;
 
   final List<DashboardItem> _availableTools = [
     DashboardItem(title: 'Little Emmi', subtitle: '', icon: Icons.child_care_outlined, accentColor: Colors.teal, onTap: () {}),
@@ -118,7 +126,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     }
   }
 
-  // ✅ ADDED: The Missing Method for Drag & Drop
   void _handleAppDrop(DashboardItem item) {
     showDialog(
       context: context,
@@ -144,7 +151,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {
-              // ✅ Set the tool and close dialog
               setState(() => _selectedToolForProject = item);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -161,6 +167,44 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
+  // 📢 SEND BROADCAST FUNCTION
+  Future<void> _sendBroadcast() async {
+    if (_noticeTitleController.text.isEmpty || _noticeMessageController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill in Title and Message!")));
+      return;
+    }
+
+    setState(() => _isSendingNotice = true);
+
+    try {
+      await FirebaseFirestore.instance.collection('broadcasts').add({
+        'title': _noticeTitleController.text.trim(),
+        'message': _noticeMessageController.text.trim(),
+        'className': _classes[_selectedClassIndex],
+        'teacherName': _teacherName,
+        'schoolId': _teacherSchoolId,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Notice sent to ${_classes[_selectedClassIndex]}!"),
+            backgroundColor: Colors.orangeAccent
+        ));
+        setState(() {
+          _noticeTitleController.clear();
+          _noticeMessageController.clear();
+          _isSendingNotice = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSendingNotice = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
+      }
+    }
+  }
+
   Future<void> _createProject() async {
     if (_projectTitleController.text.isEmpty || _selectedToolForProject == null || _selectedDueDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill in Title, Tool, and Due Date!")));
@@ -169,7 +213,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     setState(() => _isUploading = true);
     try {
       String? imageUrl;
-      // Upload Hint Image to Cloudinary if selected
       if (_hintType == 'image' && _selectedImageFile != null) {
         imageUrl = await _cloudinary.uploadImage(_selectedImageFile!);
       }
@@ -207,19 +250,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
       }
     }
-  }
-
-  void _showAttendanceDialog() { Navigator.of(context).pop(); }
-  void _showGradesDialog() { }
-  void _showStudentListDialog() { }
-  void _showNoticeDialog() { }
-  Widget _buildStudentListStream(Widget Function(QueryDocumentSnapshot) itemBuilder) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').where('role', isEqualTo: 'student').snapshots(),
-      builder: (context, snapshot) {
-        return Container();
-      },
-    );
   }
 
   @override
@@ -260,7 +290,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   Text("Create Assignment", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
                   const SizedBox(height: 16),
 
-                  // 🛠️ DRAGGABLE TOOLS LIST
                   SizedBox(
                     height: 80,
                     child: ListView.builder(
@@ -286,6 +315,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
                   _buildProjectCreatorCard(),
 
+                  const SizedBox(height: 30),
+
+                  // 📢 NEW: BROADCAST SECTION
+                  Text("Class Announcement", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
+                  const SizedBox(height: 16),
+                  _buildBroadcastCard(),
+
                   const SizedBox(height: 40),
                   Text("Recent Uploads", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
                   const SizedBox(height: 16),
@@ -300,6 +336,52 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   // --- WIDGET BUILDERS ---
+
+  Widget _buildBroadcastCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E1), // Light Amber
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
+        boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.1), blurRadius: 20)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.campaign_rounded, color: Colors.orange, size: 28),
+              const SizedBox(width: 10),
+              Text("Send Notice to ${_classes[_selectedClassIndex]}", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.brown[800])),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildStyledTextField(_noticeTitleController, "Subject (e.g., Exam Postponed)", Icons.title),
+          const SizedBox(height: 12),
+          _buildStyledTextField(_noticeMessageController, "Type your message here...", Icons.message_outlined, maxLines: 3),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 45,
+            child: ElevatedButton.icon(
+              onPressed: _isSendingNotice ? null : _sendBroadcast,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0
+              ),
+              icon: _isSendingNotice
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Icon(Icons.send_rounded, size: 18),
+              label: Text("Broadcast Notice", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            ),
+          )
+        ],
+      ),
+    );
+  }
 
   Widget _buildToolChip(DashboardItem item, {bool isDragging = false}) {
     return Container(
@@ -338,12 +420,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           const SizedBox(height: 12),
           _buildStyledTextField(_projectDescController, "Instructions...", Icons.description, maxLines: 3),
           const SizedBox(height: 20),
-
-          // 🎯 DRAG TARGET ZONE (Fixed)
           Text("Required Tool (Drag & Drop here)", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600])),
           const SizedBox(height: 8),
           DragTarget<DashboardItem>(
-            // ✅ FIX: Access .data from details
             onAcceptWithDetails: (details) {
               _handleAppDrop(details.data);
             },
@@ -381,8 +460,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           ),
 
           const SizedBox(height: 20),
-
-          // 💡 HINT SYSTEM
           Text("Add Hint (Optional)", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600])),
           const SizedBox(height: 8),
           Row(
@@ -418,8 +495,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
 
           const SizedBox(height: 20),
-
-          // 📅 DUE DATE PICKER
           Text("Deadline", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600])),
           const SizedBox(height: 8),
           InkWell(
@@ -448,8 +523,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           ),
 
           const SizedBox(height: 24),
-
-          // Submit Button
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -517,9 +590,37 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         ]));
   }
 
-  Widget _buildStyledTextField(TextEditingController controller, String hint, IconData icon, {int maxLines = 1}) => TextField(controller: controller, maxLines: maxLines, decoration: InputDecoration(hintText: hint, prefixIcon: Icon(icon, size: 20, color: Colors.grey[400]), filled: true, fillColor: Colors.grey[50], border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)));
+  Widget _buildStyledTextField(TextEditingController controller, String hint, IconData icon, {int maxLines = 1}) => TextField(controller: controller, maxLines: maxLines, decoration: InputDecoration(hintText: hint, prefixIcon: Icon(icon, size: 20, color: Colors.grey[400]), filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200))));
 
-  Widget _buildHeader(BuildContext context) => Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Teacher Portal", style: GoogleFonts.poppins(fontSize: 14, color: Colors.blueGrey[500], fontWeight: FontWeight.w600)), Text("Welcome, $_teacherName", style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]))]), IconButton(icon: const Icon(Icons.logout_rounded, color: Colors.redAccent), onPressed: () => Navigator.pop(context))]);
+  // ✅ FIXED HEADER AND LOGOUT
+  Widget _buildHeader(BuildContext context) => Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Teacher Portal", style: GoogleFonts.poppins(fontSize: 14, color: Colors.blueGrey[500], fontWeight: FontWeight.w600)),
+              Text("Welcome, $_teacherName", style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]))
+            ]
+        ),
+        IconButton(
+            icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+            onPressed: () async {
+              // 1. Sign out from Firebase
+              await FirebaseAuth.instance.signOut();
+
+              if (!context.mounted) return;
+
+              // 2. Clear history and go to Login Screen
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen()),
+                    (route) => false,
+              );
+            }
+        )
+      ]
+  );
 }
 
 class _TeacherBackground extends StatelessWidget { const _TeacherBackground(); @override Widget build(BuildContext context) => Container(color: const Color(0xFFF8FAFC)); }

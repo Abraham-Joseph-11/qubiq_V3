@@ -11,11 +11,13 @@ import 'package:camera/camera.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io' show Platform;
 import 'package:process_run/shell.dart';
+import 'package:little_emmi/secrets.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
+// APP IMPORTS
 import 'package:little_emmi/Screens/flowchart_ide_screen.dart';
 import 'package:little_emmi/Screens/python_ide_screen.dart';
 import 'package:little_emmi/Screens/inappwebview_screen.dart';
@@ -38,7 +40,8 @@ class StudentDashboardScreen extends StatefulWidget {
 
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> with WidgetsBindingObserver {
   String _userName = "Student";
-  final String _studentClass = "Class 5-A";
+  String _studentClass = "Loading..."; // Starts as loading to prevent empty queries
+
   Timer? _internetCheckTimer;
   bool _isOffline = false;
 
@@ -46,23 +49,19 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Wi
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
-    // 🚀 CACHE START: Load data immediately
-    _fetchUserName();
+    _fetchUserData();
     _requestCameraPermission();
     _internetCheckTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       _verifyRealInternet();
     });
   }
 
-  // 🚀 CACHE: Pre-load images for smoother UI
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _precacheAssets();
   }
 
-  // 🚀 LOGOUT: Handle Desktop Close
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if ((Platform.isWindows || Platform.isMacOS) && state == AppLifecycleState.detached) {
@@ -72,14 +71,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Wi
 
   void _precacheAssets() {
     final List<String> assets = [
-      'assets/images/quiz.png',
-      'assets/images/suno.png',
-      'assets/images/chatai.png',
-      'assets/images/imagegen.png',
-      'assets/images/soundgen.png',
-      'assets/images/word.png',
-      'assets/images/powerpoint.png',
-      'assets/images/excel.png',
+      'assets/images/quiz.png', 'assets/images/suno.png', 'assets/images/chatai.png',
+      'assets/images/imagegen.png', 'assets/images/soundgen.png', 'assets/images/word.png',
+      'assets/images/powerpoint.png', 'assets/images/excel.png',
     ];
     for (String path in assets) {
       precacheImage(AssetImage(path), context);
@@ -105,17 +99,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Wi
   }
 
   Future<void> _requestCameraPermission() async {
-    if (Platform.isWindows) {
-      try {
-        final cameras = await availableCameras();
-        if (cameras.isEmpty) {
-          debugPrint("No cameras found. Permission might be denied in Windows Settings.");
-        }
-      } catch (e) {
-        debugPrint("Camera access denied on Windows: $e");
-      }
-      return;
-    }
+    if (Platform.isWindows) return;
     var status = await Permission.camera.status;
     if (status.isDenied) await Permission.camera.request();
     if (await Permission.camera.isPermanentlyDenied) openAppSettings();
@@ -133,68 +117,42 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Wi
     }
   }
 
-  // 🚀 CACHE LOGIC: Fetch User Name
-  Future<void> _fetchUserName() async {
+  // ✅ FIXED: Normalizes "5-A" to "Class 5-A"
+  Future<void> _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        // 1. Check Local Cache FIRST (Fastest)
-        final docCache = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get(const GetOptions(source: Source.cache)); //
+        var doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
 
-        if (docCache.exists && mounted) {
-          setState(() => _userName = docCache.get('name'));
-          return; // If found in cache, we are done!
+        if (doc.exists && mounted) {
+          final data = doc.data() as Map<String, dynamic>;
+
+          setState(() {
+            _userName = data['name'] ?? "Student";
+
+            if (data.containsKey('class')) {
+              String rawClass = data['class']; // e.g., "5-A"
+
+              // 🔧 FIX: Check if "Class" is missing and add it
+              if (!rawClass.trim().startsWith("Class")) {
+                _studentClass = "Class $rawClass"; // Becomes "Class 5-A"
+              } else {
+                _studentClass = rawClass;
+              }
+              debugPrint("✅ Fixed Class Name for Query: $_studentClass");
+            } else {
+              _studentClass = "No Class Assigned";
+            }
+          });
         }
-
-        // 2. Fallback to Server if cache is empty
-        final docServer = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get(const GetOptions(source: Source.server));
-
-        if (docServer.exists && mounted) {
-          setState(() => _userName = docServer.get('name'));
-        }
-      } catch (e) { debugPrint("Error: $e"); }
+      } catch (e) {
+        debugPrint("🔥 ERROR: $e");
+      }
     }
   }
 
   void _showComingSoon(BuildContext context, String featureName) {
-    showDialog(
-      context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.construction_rounded, size: 50, color: Colors.orangeAccent),
-                const SizedBox(height: 20),
-                Text("Coming Soon!", style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                Text("$featureName is under development.", textAlign: TextAlign.center),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Got it"),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    showDialog(context: context, builder: (context) => AlertDialog(title: const Text("Coming Soon"), content: Text("$featureName is under development.")));
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -202,19 +160,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Wi
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text("Student Portal", style: GoogleFonts.poppins(fontSize: 14, color: Colors.blueGrey[500], fontWeight: FontWeight.w600)),
+          // Shows the fixed class name so you can verify it matches the teacher's dashboard
+          Text("Student Portal ($_studentClass)", style: GoogleFonts.poppins(fontSize: 14, color: Colors.blueGrey[500], fontWeight: FontWeight.w600)),
           Text("Welcome, $_userName", style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
         ]),
         IconButton(
           icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
           onPressed: () async {
-            // 🛑 FORCE LOGOUT
             await FirebaseAuth.instance.signOut();
             if (context.mounted) {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen()),
-                    (route) => false,
-              );
+              Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen()), (route) => false);
             }
           },
         ),
@@ -222,17 +177,105 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Wi
     ).animate().fadeIn();
   }
 
+  Widget _buildNoticeBoard() {
+    // Wait for the class name to be fixed before querying
+    if (_studentClass == "Loading..." || _studentClass == "No Class Assigned") {
+      return const SizedBox.shrink();
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('broadcasts')
+          .where('className', isEqualTo: _studentClass) // Matches "Class 5-A" now!
+          .orderBy('timestamp', descending: true)
+          .limit(3)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          debugPrint("🔥 NOTICE ERROR: ${snapshot.error}");
+          // If you still see this, check debug console for index link
+          return const SizedBox.shrink();
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.campaign_rounded, color: Colors.orangeAccent, size: 24),
+                const SizedBox(width: 8),
+                Text("Notice Board", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey[800])),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 140,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: snapshot.data!.docs.length,
+                itemBuilder: (context, index) {
+                  var doc = snapshot.data!.docs[index];
+                  var data = doc.data() as Map<String, dynamic>;
+                  String title = data['title'] ?? 'Notice';
+                  String message = data['message'] ?? 'No details provided.';
+                  String teacher = data['teacherName'] ?? 'Teacher';
+
+                  return Container(
+                    width: 280,
+                    margin: const EdgeInsets.only(right: 16),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFFFFF8E1), Color(0xFFFFECB3)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
+                      boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4))],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(child: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.brown[800]), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)), child: Text("NEW", style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.red)))
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Expanded(child: Text(message, style: GoogleFonts.poppins(fontSize: 12, color: Colors.brown[600]), maxLines: 3, overflow: TextOverflow.ellipsis)),
+                        const SizedBox(height: 8),
+                        Row(children: [const Icon(Icons.person_outline, size: 12, color: Colors.brown), const SizedBox(width: 4), Text(teacher, style: GoogleFonts.poppins(fontSize: 10, fontStyle: FontStyle.italic, color: Colors.brown))]),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 30),
+          ],
+        ).animate().fadeIn().slideX();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 800;
 
     final List<DashboardItem> quizApps = [
-      DashboardItem(title: 'Smart Quiz', subtitle: 'Adaptive Levels', imagePath: 'assets/images/quiz.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdaptiveLearningMenu()))),
+      DashboardItem(title: 'Maths', subtitle: 'Level 1-3', icon: Icons.calculate, iconColor: Colors.orange, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdaptiveQuizScreen(subject: "Maths")))),
+      DashboardItem(title: 'Python', subtitle: 'Coding Basics', icon: Icons.code, iconColor: Colors.blue, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdaptiveQuizScreen(subject: "Python")))),
+      DashboardItem(title: 'Science', subtitle: 'Nature & Physics', icon: Icons.science, iconColor: Colors.green, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdaptiveQuizScreen(subject: "Science")))),
+      DashboardItem(title: 'English', subtitle: 'Grammar & Vocab', icon: Icons.menu_book, iconColor: Colors.pink, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdaptiveQuizScreen(subject: "English")))),
+      DashboardItem(title: 'Social Science', subtitle: 'History & Civics', icon: Icons.public, iconColor: Colors.teal, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdaptiveQuizScreen(subject: "Social Science")))),
     ];
 
     final List<DashboardItem> aiLearningApps = [
       DashboardItem(title: 'Suno AI', subtitle: 'Music Creation', imagePath: 'assets/images/suno.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://suno.com', title: 'Suno AI')))),
-      DashboardItem(title: 'Neural Chat', subtitle: 'QubiQAI Assistant', imagePath: 'assets/images/chatai.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AiChatScreen()))),
+      DashboardItem(title: 'Neural Chat', subtitle: 'QubiQAI Assistant', imagePath: 'assets/images/chatai.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AiChatScreen(apiKey: geminiApiKey)))),
       DashboardItem(title: 'Vision Forge', subtitle: 'AI Image Gen', imagePath: 'assets/images/imagegen.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ImageGenScreen()))),
       DashboardItem(title: 'Sonic Lab', subtitle: 'AI Sound FX', imagePath: 'assets/images/soundgen.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MusicGenScreen()))),
     ];
@@ -266,20 +309,21 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Wi
 
     final List<DashboardItem> productivityApps = [
       DashboardItem(title: 'Word', subtitle: 'Documents', imagePath: 'assets/images/word.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://www.office.com/launch/word', title: 'Microsoft Word')))),
-      DashboardItem(title: 'PowerPoint', subtitle: 'Slides', imagePath: 'assets/images/powerpoint.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://www.office.com/launch/powerpoint', title: 'Microsoft PowerPoint')))),
+      DashboardItem(title: 'PowerPoint', subtitle: 'Slides', imagePath: 'assets/images/ppt.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://www.office.com/launch/powerpoint', title: 'Microsoft PowerPoint')))),
       DashboardItem(title: 'Excel', subtitle: 'Spreadsheets', imagePath: 'assets/images/excel.png', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InAppWebViewScreen(url: 'https://www.office.com/launch/excel', title: 'Microsoft Excel')))),
     ];
 
     final List<_CategoryTile> categories = [
-      _CategoryTile(name: "Adaptive Learning", color: Colors.deepPurpleAccent, items: quizApps),
       _CategoryTile(name: "AI Learning", color: Colors.blue, items: aiLearningApps),
       _CategoryTile(name: "Teachable Machine", color: Colors.orange, items: teachableApps),
       _CategoryTile(name: "Robotics", color: Colors.teal, items: roboticsApps),
-      _CategoryTile(name: "Mobile App", color: Colors.green, items: mobileApps),
       _CategoryTile(name: "Coding", color: Colors.amber, items: codingApps),
       _CategoryTile(name: "Augmented Reality", color: Colors.pinkAccent, items: arApps),
       _CategoryTile(name: "Productivity Studio", color: Colors.indigo, items: productivityApps),
+      _CategoryTile(name: "Adaptive Learning", color: Colors.deepPurpleAccent, items: quizApps),
+      _CategoryTile(name: "Mobile App", color: Colors.green, items: mobileApps),
     ];
+
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -301,21 +345,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Wi
                   _buildHeader(context),
                   const SizedBox(height: 30),
                   if (isMobile) Column(children: [_buildGlassProgressCard(), const SizedBox(height: 16), _buildStatsGrid(isMobile)]) else Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: 3, child: _buildGlassProgressCard()), const SizedBox(width: 20), Expanded(flex: 5, child: _buildStatsGrid(isMobile))]),
+
                   const SizedBox(height: 30),
+                  _buildNoticeBoard(),
+
                   Text("Experiments", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey[800])),
                   const SizedBox(height: 16),
-                  StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance.collection('assignments').where('className', isEqualTo: _studentClass).orderBy('dueDate', descending: false).snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasError) return Center(child: Text("Error loading tasks", style: GoogleFonts.poppins(color: Colors.redAccent)));
-                      if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text("No assignments due! 🎉", style: GoogleFonts.poppins(color: Colors.grey)));
-                      return ListView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
-                        var doc = snapshot.data!.docs[index];
-                        return _buildRealProjectTile(context, doc.data() as Map<String, dynamic>, doc.id);
-                      });
-                    },
-                  ),
+
+                  // ✅ FIXED EXPERIMENTS LIST
+                  _buildExperimentsList(),
+
                   const SizedBox(height: 30),
                   ...categories.map((category) => _buildCategorySection(category, isMobile)),
                   const SizedBox(height: 60),
@@ -326,6 +365,66 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> with Wi
           _buildOfflineBanner(),
         ],
       ),
+    );
+  }
+
+  Widget _buildExperimentsList() {
+    if (_studentClass == "Loading..." || _studentClass == "No Class Assigned") {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Text("Waiting for class data: $_studentClass", style: const TextStyle(color: Colors.grey)),
+        ),
+      );
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('assignments')
+          .where('className', isEqualTo: _studentClass) // e.g. "Class 5-A"
+          .orderBy('dueDate', descending: false)
+          .snapshots(),
+      builder: (context, snapshot) {
+        // 🛑 DEBUG: Catch Database Index Errors
+        if (snapshot.hasError) {
+          debugPrint("🔥 EXPERIMENTS ERROR: ${snapshot.error}");
+          return Container(
+            padding: const EdgeInsets.all(12),
+            color: Colors.red[50],
+            child: Column(
+              children: [
+                const Text("Database Error", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                const Text("Check your IDE Debug Console to create the missing index!", style: TextStyle(fontSize: 10)),
+              ],
+            ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                Icon(Icons.assignment_turned_in_outlined, size: 40, color: Colors.grey[300]),
+                const SizedBox(height: 10),
+                Text("No tasks found for: '$_studentClass'", style: GoogleFonts.poppins(color: Colors.grey)),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              var doc = snapshot.data!.docs[index];
+              return _buildRealProjectTile(context, doc.data() as Map<String, dynamic>, doc.id);
+            });
+      },
     );
   }
 
@@ -375,6 +474,6 @@ class AssignmentDetailScreen extends StatelessWidget {
 }
 
 class _CategoryTile { final String name; final Color color; final List<DashboardItem> items; _CategoryTile({required this.name, required this.color, required this.items}); }
-class _ImageAppCard extends StatelessWidget { final DashboardItem item; const _ImageAppCard({required this.item}); @override Widget build(BuildContext context) { return GestureDetector(onTap: item.onTap, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white, width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3))]), child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [Expanded(child: Container(padding: const EdgeInsets.all(34), decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.white), child: Image.asset(item.imagePath, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_rounded, size: 30, color: Colors.grey)))), const SizedBox(height: 8), Text(item.title, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]), maxLines: 1, overflow: TextOverflow.ellipsis), const SizedBox(height: 2), Text(item.subtitle, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 9, color: Colors.blueGrey[400]), maxLines: 1, overflow: TextOverflow.ellipsis)]))); } }
-class DashboardItem { final String title; final String subtitle; final String imagePath; final VoidCallback onTap; DashboardItem({required this.title, required this.subtitle, required this.imagePath, required this.onTap}); }
+class _ImageAppCard extends StatelessWidget { final DashboardItem item; const _ImageAppCard({required this.item}); @override Widget build(BuildContext context) { return GestureDetector(onTap: item.onTap, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withOpacity(0.8), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white, width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3))]), child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [Expanded(child: Container(padding: EdgeInsets.all(item.icon != null ? 20 : 34), decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.white), child: item.icon != null ? Center(child: Icon(item.icon, size: 40, color: item.iconColor ?? Colors.blue)) : Image.asset(item.imagePath!, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_rounded, size: 30, color: Colors.grey)))), const SizedBox(height: 8), Text(item.title, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]), maxLines: 1, overflow: TextOverflow.ellipsis), const SizedBox(height: 2), Text(item.subtitle, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 9, color: Colors.blueGrey[400]), maxLines: 1, overflow: TextOverflow.ellipsis)]))); } }
+class DashboardItem { final String title; final String subtitle; final String? imagePath; final IconData? icon; final Color? iconColor; final VoidCallback onTap; DashboardItem({required this.title, required this.subtitle, this.imagePath, this.icon, this.iconColor, required this.onTap}); }
 class PastelAnimatedBackground extends StatelessWidget { const PastelAnimatedBackground({super.key}); @override Widget build(BuildContext context) { return Container(color: Colors.white); } }

@@ -1,14 +1,17 @@
 // lib/Screens/ai_chat_screen.dart
 
 import 'dart:convert';
-import 'dart:ui' as ui; // ✅ Added at the top for Glassmorphism
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_animate/flutter_animate.dart';
 
 class AiChatScreen extends StatefulWidget {
-  const AiChatScreen({super.key});
+  final String apiKey; // 1. Variable to hold the key
+
+  // 2. Constructor requires the key
+  const AiChatScreen({super.key, required this.apiKey});
 
   @override
   State<AiChatScreen> createState() => _AiChatScreenState();
@@ -20,10 +23,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final List<_ChatMessage> _messages = [];
   bool _isSending = false;
 
-  // 🔑 YOUR API KEY
-  final String _apiKey = 'AIzaSyC2G1pEmKdg1b8q9Mm4qzSVejL06sb1VNo';
-
-  // ✅ Model Name (Use 'gemini-2.0-flash-exp' if you are on the free tier and hit limits)
+  // ✅ Model Name
   final String _modelName = 'gemini-flash-latest';
 
   // Suggestions for empty state
@@ -48,8 +48,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
     try {
       final cleanModelName = _modelName.replaceAll('models/', '');
+
+      // ---------------------------------------------------------
+      // 🔑 CRITICAL FIX: Using 'widget.apiKey' here
+      // ---------------------------------------------------------
       final url = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/$cleanModelName:generateContent?key=$_apiKey');
+          'https://generativelanguage.googleapis.com/v1beta/models/$cleanModelName:generateContent?key=${widget.apiKey}');
 
       final response = await http.post(
         url,
@@ -134,7 +138,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ✅ UPDATED BRANDING
                 Text(
                   'QubiQAI',
                   style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),

@@ -1,429 +1,369 @@
-import 'dart:ui';
+import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:sensors_plus/sensors_plus.dart';
-import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// VVV --- FIX: ADD ALL NECESSARY IMPORTS --- VVV
-import '../../Models/AdminModels.dart';
-import '../../Screens/Admin/super_admin_screen.dart';
-import '../../Screens/Admin/institution_admin_screen.dart';
-import '../../Screens/Teacher/teacher_dashboard_screen.dart';
-import '../../Screens/Student/student_dashboard_screen.dart';
-// ^^^ ---------------------------------------- ^^^
+// ✅ Dashboards
+import 'package:little_emmi/Screens/Dashboard/dashboard_screen.dart';
+import 'package:little_emmi/Screens/Auth/student_dashboard.dart';
+import 'package:little_emmi/Screens/Auth/teacher_dashboard.dart';
+import 'package:little_emmi/Screens/Dashboard/super_admin_dashboard.dart';
+import 'package:little_emmi/Screens/robot_launch_screen.dart';
 
-// Defines the four user roles
-enum UserRole { superAdmin, institution, teacher, student }
+// 🚀 USE THE ADMIN DASHBOARD YOU PROVIDED
+import 'package:little_emmi/Screens/Dashboard/admin_dashboard.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+import 'package:little_emmi/Utils/responsive_layout.dart';
+
+class LittleEmmiLoginScreen extends StatefulWidget {
+  const LittleEmmiLoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LittleEmmiLoginScreen> createState() => _LittleEmmiLoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LittleEmmiLoginScreenState extends State<LittleEmmiLoginScreen> {
+  bool _isLogin = true;
+  String _selectedRole = 'student';
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
 
-  bool _isPasswordVisible = false;
+  // Dropdown Values
+  String _selectedClass = "1";
+  String _selectedSection = "A";
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _schoolIdController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
+
+  String? _generatedOtp;
+  bool _isOtpSent = false;
   bool _isLoading = false;
   String? _errorMessage;
 
-  late AnimationController _shakeController;
+  // 🔐 EmailJS Config
+  final String serviceId = "service_bfu9is8";
+  final String templateId = "template_hurkklz";
+  final String publicKey = "25m02sQQ9YzU3GnLY";
 
-  final MockTeacher _mockTeacher = MockTeacher(
-    id: const Uuid().v4(),
-    name: 'Mrs. Evans',
-    email: 'teacher@school.com',
-    gradeLevel: 8,
-  );
-
-  final MockTeacher _mockStudent = MockTeacher(
-    id: const Uuid().v4(),
-    name: 'Student X',
-    email: 'student@school.com',
-    gradeLevel: 8, // Student is assigned to Grade 8
-  );
-
-  // --- MOCK AUTHENTICATION DATA ---
-  final Map<String, String> _mockCredentials = {
-    'admin@emmi.com': 'admin123', // SuperAdmin
-    'institution@school.com': 'inst123', // Institution
-    'teacher@school.com': 'teacher123', // Teacher
-    'student@school.com': 'student123', // Student
-  };
-
-  UserRole _getRoleFromUsername(String username) {
-    if (username.contains('admin')) return UserRole.superAdmin;
-    if (username.contains('institution')) return UserRole.institution;
-    if (username.contains('teacher')) return UserRole.teacher;
-    if (username.contains('student')) return UserRole.student;
-    return UserRole.student;
-  }
+  // Education Purple Theme
+  final Color _accentColor = const Color(0xFF8B5CF6);
 
   @override
   void initState() {
     super.initState();
-    _shakeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
+    _otpController.addListener(() {
+      if (_isOtpSent) setState(() {});
+    });
+  }
+
+  Future<void> _deactivateLicense() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    if(!mounted) return;
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const RobotLaunchScreen()),
+            (route) => false
     );
   }
 
-  Future<void> _handleLogin() async {
-    FocusScope.of(context).unfocus();
-
-    if (!_formKey.currentState!.validate()) {
-      _shakeController.forward(from: 0);
+  Future<void> _sendOtp() async {
+    if (_emailController.text.isEmpty || _nameController.text.isEmpty) {
+      setState(() => _errorMessage = "Please enter Name and Email first.");
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    setState(() { _isLoading = true; _errorMessage = null; });
 
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text.trim();
+    String code = (Random().nextInt(900000) + 100000).toString();
+    _generatedOtp = code;
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.emailjs.com/api/v1.0/email/send'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'service_id': serviceId,
+          'template_id': templateId,
+          'user_id': publicKey,
+          'template_params': {
+            'to_email': _emailController.text,
+            'otp': code,
+            'user_name': _nameController.text,
+            'user_login_email': _emailController.text
+          }
+        }),
+      );
 
-    if (_mockCredentials.containsKey(username) &&
-        _mockCredentials[username] == password) {
-
-      final role = _getRoleFromUsername(username);
-
-      if (mounted) {
-        Widget destination;
-
-        if (role == UserRole.superAdmin) {
-          destination = const SuperAdminScreen();
-        } else if (role == UserRole.institution) {
-          destination = const InstitutionAdminScreen();
-        } else if (role == UserRole.teacher) {
-          destination = TeacherDashboardScreen(teacher: _mockTeacher);
-        } else {
-          destination = StudentDashboardScreen(teacher: _mockStudent);
-        }
-
-        // Navigate and clear the history
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => destination),
-              (Route<dynamic> route) => false,
-        );
+      if (response.statusCode == 200) {
+        setState(() { _isOtpSent = true; _isLoading = false; });
+      } else {
+        setState(() { _isLoading = false; _errorMessage = "Failed to send OTP."; });
       }
-    } else {
-      _shakeController.forward(from: 0);
-      setState(() {
-        _errorMessage = 'Invalid username or password. Try a mock credential.';
-      });
+    } catch (e) {
+      setState(() { _errorMessage = "Connection failed: $e"; _isLoading = false; });
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+    final auth = FirebaseAuth.instance;
+    final firestore = FirebaseFirestore.instance;
+
+    if (!_isLogin) {
+      if (!_isOtpSent) { setState(() => _errorMessage = "Verify OTP first."); return; }
+      if (_otpController.text.trim() != _generatedOtp) { setState(() => _errorMessage = "Invalid OTP."); return; }
+
+      DocumentSnapshot sCheck = await firestore.collection('schools').doc(_schoolIdController.text.trim()).get();
+      if (!sCheck.exists) { setState(() => _errorMessage = "School ID not found."); return; }
     }
 
-    if (mounted) setState(() => _isLoading = false);
+    setState(() { _isLoading = true; _errorMessage = null; });
+    try {
+      if (_isLogin) {
+        UserCredential cred = await auth.signInWithEmailAndPassword(
+            email: _emailController.text.trim(), password: _passController.text.trim());
+        DocumentSnapshot userDoc = await firestore.collection('users').doc(cred.user!.uid).get();
+
+        if (userDoc.exists) {
+          String rawRole = userDoc.get('role') ?? 'student';
+
+          // Debug Print
+          debugPrint("✅ LOGGED IN. FIREBASE ROLE: '$rawRole'");
+
+          if (_emailController.text.trim() == "superadmin@qubiq.ai" || rawRole == "super_admin") {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SuperAdminDashboard()));
+            return;
+          }
+          if (userDoc.data().toString().contains('schoolId')) {
+            DocumentSnapshot sDoc = await firestore.collection('schools').doc(userDoc.get('schoolId')).get();
+            if (sDoc.exists && sDoc.get('status') == 'blocked') {
+              await auth.signOut();
+              setState(() { _isLoading = false; _errorMessage = "Access Blocked by School Admin."; });
+              return;
+            }
+          }
+          _navigateByRole(rawRole);
+        }
+      } else {
+        // REGISTER
+        UserCredential userCredential = await auth.createUserWithEmailAndPassword(
+            email: _emailController.text.trim(), password: _passController.text.trim());
+
+        String role = _selectedRole;
+
+        await firestore.collection('users').doc(userCredential.user!.uid).set({
+          'name': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'role': role,
+          'phone': _phoneController.text.trim(),
+          'schoolId': _schoolIdController.text.trim(),
+          'class': role == 'student' ? "$_selectedClass-$_selectedSection" : null,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        _navigateByRole(role);
+      }
+    } catch (e) { setState(() { _errorMessage = e.toString(); _isLoading = false; }); }
   }
 
-  // --- BUILDER WIDGETS ---
+  // ✅ FIXED NAVIGATION LOGIC
+  void _navigateByRole(String role) {
+    debugPrint("🚨 _navigateByRole CALLED");
+    String cleanRole = role.trim().toLowerCase();
 
-  InputDecoration _buildInputDecoration({required String label, required IconData icon}) {
-    // Styling taken from login_screen.dart
-    return InputDecoration(
-      labelText: label,
-      labelStyle: GoogleFonts.poppins(color: Colors.white70),
-      prefixIcon: Icon(icon, color: Colors.white70),
-      filled: true,
-      fillColor: Colors.white.withOpacity(0.1),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withOpacity(0.2))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.white, width: 1.5)),
-      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.red.shade400, width: 1.5)),
-      focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.red.shade400, width: 2)),
-    );
+    if (cleanRole == 'admin') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AdminDashboardScreen(),
+        ),
+      );
+
+    } else if (cleanRole == 'teacher') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const TeacherDashboardScreen(),
+        ),
+      );
+
+    } else {
+      // student (default)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const DashboardScreen(),
+        ),
+      );
+    }
   }
 
-  Widget _buildLoginButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _isLoading ? null : _handleLogin,
-        borderRadius: BorderRadius.circular(12),
-        splashColor: Colors.teal.withOpacity(0.5),
-        highlightColor: Colors.teal.withOpacity(0.3),
-        child: Ink(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              gradient: const LinearGradient(colors: [Color(0xFF00897B), Color(0xFF00695C)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 5))]
-          ),
-          child: Center(
-            child: _isLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : Text('LOGIN', style: GoogleFonts.poppins(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+
+  @override
+  Widget build(BuildContext context) {
+    bool isMobile = MediaQuery.of(context).size.width < 800;
+    bool requiresOtp = !_isLogin;
+
+    return Scaffold(
+      body: ResponsiveLayout(
+        desktopBody: Row(
+          children: [
+            Expanded(flex: 2, child: _buildEducationBranding(isMobile)),
+            Expanded(flex: 3, child: Container(color: Colors.white, child: Center(child: SingleChildScrollView(padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 40), child: _buildForm(requiresOtp))))),
+          ],
+        ),
+        mobileBody: SingleChildScrollView(
+          child: Column(
+            children: [
+              SizedBox(height: 250, width: double.infinity, child: _buildEducationBranding(true)),
+              Container(color: Colors.white, padding: const EdgeInsets.all(24), child: _buildForm(requiresOtp)),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSocialLoginSection() {
+  Widget _buildEducationBranding(bool isMobile) {
+    return Container(
+      decoration: BoxDecoration(color: Colors.grey[50], border: Border(right: BorderSide(color: Colors.grey.shade300))),
+      child: Stack(
+        children: [
+          Positioned.fill(child: CustomPaint(painter: GridPainter(color: _accentColor.withOpacity(0.05)))),
+          Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/images/qubiq_logo.png', width: isMobile ? 300 : 250),
+                  const SizedBox(height: 30),
+                  Text("EDUCATION\nPORTAL", textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 4.0, color: Colors.blueGrey[900])),
+                  const SizedBox(height: 20),
+                  Container(width: 40, height: 4, decoration: BoxDecoration(color: _accentColor, borderRadius: BorderRadius.circular(2))),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+              bottom: 20,
+              left: 20,
+              child: TextButton.icon(
+                  onPressed: _deactivateLicense,
+                  icon: Icon(Icons.logout, size: 14, color: Colors.grey[400]),
+                  label: Text("Deactivate License", style: TextStyle(color: Colors.grey[400], fontSize: 10))
+              )
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildForm(bool requiresOtp) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Expanded(child: Divider(color: Colors.white54)),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text("Or continue with", style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.8))),
-            ),
-            const Expanded(child: Divider(color: Colors.white54)),
-          ],
+        Text(_isLogin ? "Welcome back" : "Create account", style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 40),
+        Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (!_isLogin) ...[
+                Row(children: [
+                  Expanded(child: _buildTextField(_nameController, "Full Name", Icons.person_outline)),
+                  const SizedBox(width: 20),
+                  Expanded(child: _buildTextField(_phoneController, "Phone Number", Icons.phone_outlined, isNum: true)),
+                ]),
+                const SizedBox(height: 20),
+                _buildRoleSelector(),
+                const SizedBox(height: 20),
+                _buildTextField(_schoolIdController, "School ID", Icons.badge_outlined, isNum: true),
+                const SizedBox(height: 20),
+                if (_selectedRole == 'student') _buildClassDropdowns(),
+              ],
+              _buildTextField(_emailController, "Email Address", Icons.email_outlined),
+              const SizedBox(height: 20),
+              _buildTextField(_passController, "Password", Icons.lock_outline, isPass: true),
+
+              if (requiresOtp && _isOtpSent) ...[
+                const SizedBox(height: 30),
+                _buildCoolOtpInput(),
+              ],
+
+              if (_errorMessage != null) Padding(padding: const EdgeInsets.only(top: 15), child: Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold))),
+
+              const SizedBox(height: 30),
+              SizedBox(
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: _accentColor, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 5),
+                  onPressed: _isLoading ? null : (requiresOtp && !_isOtpSent ? _sendOtp : _submitForm),
+                  child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : Text(requiresOtp && !_isOtpSent ? "Verify Identity" : (_isLogin ? "Sign In" : "Register"), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              const SizedBox(height: 30),
+              Center(child: GestureDetector(onTap: () => setState(() { _isLogin = !_isLogin; _isOtpSent = false; _errorMessage = null; }), child: RichText(text: TextSpan(style: TextStyle(color: Colors.grey[600]), children: [TextSpan(text: _isLogin ? "New to Qubiq AI? " : "Already have an account? "), TextSpan(text: _isLogin ? "Create account" : "Log in", style: TextStyle(color: _accentColor, fontWeight: FontWeight.bold))])))),
+            ],
+          ),
         ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+      ],
+    );
+  }
+
+  Widget _buildCoolOtpInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("ENTER 6-DIGIT CODE", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: Colors.grey[600])),
+        const SizedBox(height: 12),
+        Stack(
+          alignment: Alignment.center,
           children: [
-            // VVV --- NEW APPS BUTTON (Dashboard Shortcut) --- VVV
-            _SocialButton(
-              icon: Icons.apps_outlined,
-              tooltip: "App Dashboard",
-              // Navigate directly to the dashboard, removing the login page
-              onTap: () => Navigator.pushReplacementNamed(context, '/dashboard'),
-            ),
-            // ^^^ ------------------------------------------- ^^^
-            const SizedBox(width: 20),
-            _SocialButton(icon: FontAwesomeIcons.google, onTap: () {}, tooltip: "Sign in with Google"),
-            const SizedBox(width: 20),
-            _SocialButton(icon: FontAwesomeIcons.apple, onTap: () {}, tooltip: "Sign in with Apple"),
-            const SizedBox(width: 20),
-            _SocialButton(icon: FontAwesomeIcons.facebookF, onTap: () {}, tooltip: "Sign in with Facebook"),
+            Opacity(opacity: 0.0, child: TextFormField(controller: _otpController, autofocus: true, keyboardType: TextInputType.number, maxLength: 6, style: const TextStyle(color: Colors.transparent), decoration: const InputDecoration(counterText: "", border: OutlineInputBorder(), fillColor: Colors.transparent, filled: true), enableInteractiveSelection: false)),
+            IgnorePointer(child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: List.generate(6, (index) { String char = ""; if (_otpController.text.length > index) { char = _otpController.text[index]; } bool isFocused = _otpController.text.length == index; bool isFilled = _otpController.text.length > index; return AnimatedContainer(duration: const Duration(milliseconds: 200), curve: Curves.easeInOut, width: 45, height: 55, decoration: BoxDecoration(color: isFilled ? _accentColor.withOpacity(0.05) : Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: isFocused ? _accentColor : (isFilled ? _accentColor.withOpacity(0.5) : Colors.grey.shade300), width: isFocused ? 2 : 1.5), boxShadow: isFocused ? [BoxShadow(color: _accentColor.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4))] : []), child: Center(child: Text(char, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _accentColor)))); }))),
           ],
         ),
       ],
     );
   }
 
-  // --- MAIN BUILD METHOD (Unchanged) ---
-  @override
-  Widget build(BuildContext context) {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+  Widget _buildClassDropdowns() {
+    return Padding(padding: const EdgeInsets.only(bottom: 25), child: Row(children: [Expanded(child: _customDropdown("Class", _selectedClass, ["1","2","3","4","5","6","7","8","9","10","11","12"], Icons.school_outlined, (v) => setState(() => _selectedClass = v!))), const SizedBox(width: 15), Expanded(child: _customDropdown("Section", _selectedSection, ["A","B","C","D","E"], Icons.groups_3_outlined, (v) => setState(() => _selectedSection = v!)))]));
+  }
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          const ParallaxBubbleBackground(),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Animate(
-                controller: _shakeController,
-                effects: const [ShakeEffect(hz: 4, duration: Duration(milliseconds: 300), rotation: 0.02)],
-                child: GlassmorphismContainer(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const CircleAvatar(
-                          radius: 45,
-                          backgroundColor: Colors.white,
-                          child: Icon(Icons.child_care, size: 50, color: Color(0xFF00796B)),
-                        ).animate().scale(delay: 200.ms, duration: 700.ms, curve: Curves.elasticOut),
-                        const SizedBox(height: 20),
-                        Text('Welcome Back to Little Emmi', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                        const SizedBox(height: 8),
-                        Text('Please sign in to continue', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 16, color: Colors.white70)),
-                        const SizedBox(height: 32),
+  Widget _customDropdown(String label, String value, List<String> items, IconData icon, ValueChanged<String?> onChanged) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.only(left: 8, bottom: 8), child: Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2, color: Colors.grey[600]))), Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.grey.shade200), boxShadow: [BoxShadow(color: _accentColor.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: value, isExpanded: true, icon: Icon(Icons.keyboard_arrow_down_rounded, color: _accentColor), borderRadius: BorderRadius.circular(15), items: items.map((e) => DropdownMenuItem(value: e, child: Row(children: [Icon(icon, size: 18, color: Colors.grey[400]), const SizedBox(width: 10), Text(e)]))).toList(), onChanged: onChanged)))] );
+  }
 
-                        // --- Username Field ---
-                        TextFormField(
-                          controller: _usernameController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: _buildInputDecoration(label: 'Email / Username', icon: Icons.person_outline),
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) => (value == null || value.isEmpty) ? 'Please enter a username' : null,
-                        ),
-                        const SizedBox(height: 16),
+  Widget _buildRoleSelector() {
+    return Row(children: ['student', 'teacher', 'admin'].map((r) => Expanded(child: GestureDetector(onTap: () => setState(() => _selectedRole = r), child: Container(margin: const EdgeInsets.symmetric(horizontal: 4), padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: _selectedRole == r ? _accentColor.withOpacity(0.1) : Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: _selectedRole == r ? _accentColor : Colors.grey.shade300, width: 2)), child: Center(child: Text(r.toUpperCase(), style: TextStyle(color: _selectedRole == r ? _accentColor : Colors.grey, fontWeight: FontWeight.bold, fontSize: 10))))))).toList());
+  }
 
-                        // --- Password Field ---
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: !_isPasswordVisible,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: _buildInputDecoration(label: 'Password', icon: Icons.lock_outline).copyWith(
-                            suffixIcon: IconButton(
-                              icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility, color: Colors.white70),
-                              onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
-                            ),
-                          ),
-                          validator: (value) => (value == null || value.isEmpty) ? 'Please enter your password' : null,
-                          onFieldSubmitted: (_) => _handleLogin(),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // --- Error Message ---
-                        if (_errorMessage != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 15.0),
-                            child: Text(
-                              _errorMessage!,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(color: Colors.redAccent, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-
-                        _buildLoginButton(),
-                        const SizedBox(height: 24),
-                        _buildSocialLoginSection(),
-                      ].animate(interval: 80.ms).fadeIn(duration: 400.ms).slideY(begin: 0.5, curve: Curves.easeOutCubic),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  Widget _buildTextField(TextEditingController ctrl, String hint, IconData icon, {bool isPass = false, bool isNum = false}) {
+    return TextFormField(controller: ctrl, obscureText: isPass, keyboardType: isNum ? TextInputType.number : TextInputType.text, decoration: InputDecoration(labelText: hint, prefixIcon: Icon(icon, size: 20, color: Colors.grey[400]), filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _accentColor, width: 1.5))), validator: (v) => v!.isEmpty ? "Required" : null);
   }
 }
 
-// --- SUPPORTING WIDGETS (Updated to accept tooltip) ---
-
-class ParallaxBubbleBackground extends StatefulWidget {
-  const ParallaxBubbleBackground({super.key});
-
-  @override
-  State<ParallaxBubbleBackground> createState() => _ParallaxBubbleBackgroundState();
-}
-
-class _ParallaxBubbleBackgroundState extends State<ParallaxBubbleBackground> {
-  double x = 0;
-  double y = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    accelerometerEvents.listen((AccelerometerEvent event) {
-      if (mounted) {
-        setState(() {
-          x = (event.x * 0.1).clamp(-0.4, 0.4);
-          y = (event.y * 0.1).clamp(-0.4, 0.4);
-        });
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF003932), Color(0xFF00695C), Color(0xFF00796B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        children: [
-          _Bubble(x: x, y: y, size: 250, color: Colors.tealAccent, speed: 1.5, alignment: const Alignment(-0.8, -0.8)),
-          _Bubble(x: x, y: y, size: 150, color: Colors.cyanAccent, speed: 0.8, alignment: const Alignment(0.7, -0.6)),
-          _Bubble(x: x, y: y, size: 350, color: Colors.lightGreenAccent, speed: 2.2, alignment: const Alignment(0.6, 0.9)),
-        ],
-      ),
-    );
-  }
-}
-
-class _Bubble extends StatelessWidget {
-  const _Bubble({
-    required this.x,
-    required this.y,
-    required this.size,
-    required this.color,
-    required this.speed,
-    required this.alignment,
-  });
-
-  final double x;
-  final double y;
-  final double size;
+class GridPainter extends CustomPainter {
   final Color color;
-  final double speed;
-  final Alignment alignment;
-
+  GridPainter({required this.color});
   @override
-  Widget build(BuildContext context) {
-    return AnimatedAlign(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      alignment: alignment - Alignment(x * speed, y * speed),
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withOpacity(0.05),
-          boxShadow: [BoxShadow(color: color.withOpacity(0.1), blurRadius: 80, spreadRadius: 20)],
-        ),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color..strokeWidth = 1.0;
+    for (double x = 0; x < size.width; x += 40) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += 40) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
   }
-}
-
-class GlassmorphismContainer extends StatelessWidget {
-  final Widget child;
-  const GlassmorphismContainer({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(25),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(25),
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final String tooltip;
-  const _SocialButton({required this.icon, required this.onTap, this.tooltip = ''});
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: CircleAvatar(
-          radius: 24,
-          backgroundColor: Colors.white.withOpacity(0.15),
-          child: FaIcon(icon, color: Colors.white, size: 20),
-        ),
-      ),
-    );
-  }
+  @override bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -79,3 +79,8 @@ linux/flutter/ephemeral/
 
 # Web
 web/build/
+
+# =========================
+# 6. Secrets & Sensitive Data
+# =========================
+lib/secrets.dart

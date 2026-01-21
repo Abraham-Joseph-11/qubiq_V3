@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../Models/AdminModels.dart'; // Ensure this path is correct
+import '../../Models/AdminModels.dart';
+import '../Auth/login_options_screen.dart'; // Ensure this path is correct
 
 // --- DATA CONSTANTS ---
 const List<String> availableChapters = [
@@ -55,6 +57,20 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       _currentTeacher.gradeAssignments[grade] = gradeMap;
     });
   }
+
+  Future<void> logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const LittleEmmiLoginScreen(),
+      ),
+          (route) => false,
+    );
+  }
+
 
   void _toggleAppAccess(String appName, bool access) {
     setState(() {
