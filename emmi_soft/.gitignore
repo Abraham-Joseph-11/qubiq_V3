@@ -1,0 +1,21 @@
+# =========================
+# Root .gitignore
+# =========================
+
+# ---- Generated Arduino sketch (from app) ----
+resources/app/Input/sketch.ino
+
+# ---- Arduino build outputs ----
+compilation/arduino/sketch/build/
+compilation/arduino/sketch/build_temp/
+*.bin
+*.elf
+
+# ---- Node / app junk ----
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ---- OS junk ----
+.DS_Store
+Thumbs.db
