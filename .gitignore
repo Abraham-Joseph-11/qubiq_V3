@@ -5,22 +5,22 @@
 # =========================
 # 2. Block Large Binary Files
 # =========================
-# *.exe
-# *.dll
-# *.lib
-# *.pdb
-# *.zip
-# *.tar
-# *.gz
-# *.rar
-# *.7z
-# *.mp4
-# *.avi
-# *.mov
-# *.mkv
-# *.apk
-# *.aab
-# *.ipa
+*.exe
+*.dll
+*.lib
+*.pdb
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.apk
+*.aab
+*.ipa
 
 # =========================
 # 3. Standard Flutter/Dart
