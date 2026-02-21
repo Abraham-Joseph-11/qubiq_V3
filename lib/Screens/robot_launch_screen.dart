@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:device_info_plus/device_info_plus.dart'; // ✅ NEW PACKAGE
+import 'package:device_info_plus/device_info_plus.dart';
 
 // IMPORT YOUR LOGIN SCREEN
 import 'package:little_emmi/Screens/Auth/login_screen.dart';
@@ -20,7 +20,8 @@ class RobotLaunchScreen extends StatefulWidget {
   State<RobotLaunchScreen> createState() => _RobotLaunchScreenState();
 }
 
-class _RobotLaunchScreenState extends State<RobotLaunchScreen> with SingleTickerProviderStateMixin {
+class _RobotLaunchScreenState extends State<RobotLaunchScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
   late Animation<Offset> _slideAnimation;
@@ -36,11 +37,16 @@ class _RobotLaunchScreenState extends State<RobotLaunchScreen> with SingleTicker
     );
 
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6, curve: Curves.easeIn)),
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.0, 0.6, curve: Curves.easeIn)),
     );
 
-    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic)),
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic)),
     );
 
     _controller.forward();
@@ -49,11 +55,18 @@ class _RobotLaunchScreenState extends State<RobotLaunchScreen> with SingleTicker
   Future<void> _checkLicenseAndNavigate() async {
     await Future.delayed(const Duration(seconds: 3));
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isActivated = prefs.getBool('is_activated') ?? false;
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // bool isActivated = prefs.getBool('is_activated') ?? false;
 
     if (!mounted) return;
 
+    // --- MODIFIED: BYPASS LICENSE CHECK ---
+    // Forces navigation to Login Screen regardless of activation status.
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen()),
+    );
+
+    /* --- ORIGINAL LOGIC (PRESERVED) ---
     if (isActivated) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen()),
@@ -63,6 +76,7 @@ class _RobotLaunchScreenState extends State<RobotLaunchScreen> with SingleTicker
         MaterialPageRoute(builder: (context) => const LicenseActivationScreen()),
       );
     }
+    */
   }
 
   @override
@@ -106,12 +120,14 @@ class _RobotLaunchScreenState extends State<RobotLaunchScreen> with SingleTicker
 // ------------------------------------------------------------------
 // 2. LICENSE ACTIVATION SCREEN (Hardware ID Logic)
 // ------------------------------------------------------------------
+// Note: This screen is currently bypassed but the code is preserved.
 
 class LicenseActivationScreen extends StatefulWidget {
   const LicenseActivationScreen({super.key});
 
   @override
-  State<LicenseActivationScreen> createState() => _LicenseActivationScreenState();
+  State<LicenseActivationScreen> createState() =>
+      _LicenseActivationScreenState();
 }
 
 class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
@@ -129,23 +145,19 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
         // Reads from Windows Registry (MachineGuid) - Very stable for labs
         WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
         deviceId = windowsInfo.deviceId;
-      }
-      else if (Platform.isMacOS) {
+      } else if (Platform.isMacOS) {
         // Hardware UUID - Tied to the motherboard
         MacOsDeviceInfo macInfo = await deviceInfo.macOsInfo;
         deviceId = macInfo.systemGUID ?? 'mac_unknown';
-      }
-      else if (Platform.isAndroid) {
+      } else if (Platform.isAndroid) {
         // Android ID - Persists until Factory Reset
         AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
         deviceId = androidInfo.id;
-      }
-      else if (Platform.isIOS) {
+      } else if (Platform.isIOS) {
         // Vendor ID - Good for App Store apps
         IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
         deviceId = iosInfo.identifierForVendor ?? 'ios_unknown';
-      }
-      else {
+      } else {
         // Fallback for Linux/Web
         deviceId = 'generic_device_${DateTime.now().millisecondsSinceEpoch}';
       }
@@ -153,7 +165,8 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       // Fallback if permission/driver fails
       debugPrint("Error getting Hardware ID: $e");
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      deviceId = prefs.getString('fallback_id') ?? DateTime.now().millisecondsSinceEpoch.toString();
+      deviceId = prefs.getString('fallback_id') ??
+          DateTime.now().millisecondsSinceEpoch.toString();
       if (!prefs.containsKey('fallback_id')) {
         await prefs.setString('fallback_id', deviceId);
       }
@@ -169,7 +182,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       return;
     }
 
-    setState(() { _isLoading = true; _errorMsg = null; });
+    setState(() {
+      _isLoading = true;
+      _errorMsg = null;
+    });
 
     try {
       final firestore = FirebaseFirestore.instance;
@@ -186,7 +202,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
           .get();
 
       if (snapshot.docs.isEmpty) {
-        setState(() { _isLoading = false; _errorMsg = "License key not found."; });
+        setState(() {
+          _isLoading = false;
+          _errorMsg = "License key not found.";
+        });
         return;
       }
 
@@ -201,7 +220,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
           return;
         } else {
           // ❌ License stolen/used by another PC
-          setState(() { _isLoading = false; _errorMsg = "Key already in use on another machine."; });
+          setState(() {
+            _isLoading = false;
+            _errorMsg = "Key already in use on another machine.";
+          });
           return;
         }
       }
@@ -216,9 +238,11 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
 
       // 5. SUCCESS
       await _saveLocalActivation(key);
-
     } catch (e) {
-      setState(() { _isLoading = false; _errorMsg = "Connection Error: $e"; });
+      setState(() {
+        _isLoading = false;
+        _errorMsg = "Connection Error: $e";
+      });
     }
   }
 
@@ -246,7 +270,6 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
             children: [
               Image.asset('assets/images/qubiq_logo.png', height: 100),
               const SizedBox(height: 40),
-
               Container(
                 constraints: const BoxConstraints(maxWidth: 450),
                 padding: const EdgeInsets.all(32),
@@ -254,43 +277,67 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10))
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10))
                     ],
-                    border: Border.all(color: Colors.grey.shade200)
-                ),
+                    border: Border.all(color: Colors.grey.shade200)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text("Product Activation", textAlign: TextAlign.center, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
+                    Text("Product Activation",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueGrey[900])),
                     const SizedBox(height: 8),
-                    Text("Enter your 12-character educational license key.", textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                    Text("Enter your 12-character educational license key.",
+                        textAlign: TextAlign.center,
+                        style:
+                            TextStyle(fontSize: 14, color: Colors.grey[600])),
                     const SizedBox(height: 30),
 
                     // LICENSE INPUT
                     TextField(
                       controller: _licenseController,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 20, letterSpacing: 3, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                      style: const TextStyle(
+                          fontSize: 20,
+                          letterSpacing: 3,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'monospace'),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-zA-Z0-9]')),
                         UpperCaseTextFormatter(),
                         LicenseKeyFormatter(),
                         LengthLimitingTextInputFormatter(14),
                       ],
                       decoration: InputDecoration(
                         hintText: "XXXX-XXXX-XXXX",
-                        hintStyle: TextStyle(fontSize: 16, letterSpacing: 2, color: Colors.grey[300]),
+                        hintStyle: TextStyle(
+                            fontSize: 16,
+                            letterSpacing: 2,
+                            color: Colors.grey[300]),
                         filled: true,
                         fillColor: const Color(0xFFF1F5F9),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 18),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 18),
                       ),
                     ),
 
                     if (_errorMsg != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
-                        child: Text(_errorMsg!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                        child: Text(_errorMsg!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                color: Colors.redAccent, fontSize: 13)),
                       ),
 
                     const SizedBox(height: 30),
@@ -301,19 +348,29 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                         onPressed: _isLoading ? null : _activateLicense,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8B5CF6),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                           elevation: 0,
                         ),
                         child: _isLoading
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : const Text("ACTIVATE PORTAL", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2))
+                            : const Text("ACTIVATE PORTAL",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1)),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 30),
-              Text("Need a license? Contact support@qubiq.ai", style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+              Text("Need a license? Contact support@qubiq.ai",
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12)),
             ],
           ),
         ),
@@ -325,23 +382,29 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
 // --- CUSTOM FORMATTERS ---
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    return TextEditingValue(text: newValue.text.toUpperCase(), selection: newValue.selection);
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    return TextEditingValue(
+        text: newValue.text.toUpperCase(), selection: newValue.selection);
   }
 }
 
 class LicenseKeyFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text;
     if (newValue.selection.baseOffset == 0) return newValue;
     var buffer = StringBuffer();
     for (int i = 0; i < text.length; i++) {
       buffer.write(text[i]);
       var nonZeroIndex = i + 1;
-      if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length) buffer.write('-');
+      if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length)
+        buffer.write('-');
     }
     var string = buffer.toString();
-    return newValue.copyWith(text: string, selection: TextSelection.collapsed(offset: string.length));
+    return newValue.copyWith(
+        text: string,
+        selection: TextSelection.collapsed(offset: string.length));
   }
 }

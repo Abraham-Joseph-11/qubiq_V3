@@ -1,4 +1,7 @@
+// lib/Screens/flowchart_ide_screen.dart
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Needed for MethodChannel
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -44,6 +47,9 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
   String _terminalOutput = "Output will appear here.";
   bool _isLoading = false;
 
+  // Platform channel for Android communication
+  static const platformChannel = MethodChannel('com.qubiq.app/python');
+
   @override
   void initState() {
     super.initState();
@@ -76,8 +82,13 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
     _codeController.text = generatedCode;
 
     try {
+      // Run script in background logic
       Future<String> scriptResultFuture = _runPythonScript(generatedCode);
+
+      // Run visual animation (Flowchart highlighting)
       await provider.runVisualAnimation();
+
+      // Wait for result
       _terminalOutput = await scriptResultFuture;
     } catch (e) {
       _terminalOutput = "Failed to run script.\nError: $e";
@@ -115,15 +126,48 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
 
   Future<String> _runPythonScript(String code) async {
     try {
-      String appDirectory = p.dirname(Platform.resolvedExecutable);
-      String pythonExePath = p.join(appDirectory, 'python_runtime', 'python.exe');
-      final directory = await getTemporaryDirectory();
-      final scriptFile = File('${directory.path}/flow_script.py');
-      await scriptFile.writeAsString(code);
-      var shell = Shell();
-      var result = await shell.run('"$pythonExePath" "${scriptFile.path}"');
-      return result.first.stdout.isNotEmpty ? result.first.stdout : "Finished.";
-    } catch (e) { return "Failed: $e"; }
+      if (Platform.isAndroid) {
+        // --- Android Execution (via MethodChannel) ---
+        try {
+          final String result = await platformChannel.invokeMethod('runPython', {
+            'code': code,
+          });
+          return result;
+        } on PlatformException catch (e) {
+          return "Android Error: ${e.message}. Ensure Chaquopy is setup.";
+        }
+      } else {
+        // --- Desktop Execution ---
+        String appDirectory = p.dirname(Platform.resolvedExecutable);
+        String pythonExePath;
+
+        if (Platform.isMacOS) {
+          pythonExePath = p.join(
+              p.dirname(p.dirname(Platform.resolvedExecutable)),
+              'Resources',
+              'python_runtime',
+              'python'
+          );
+        } else {
+          // Windows
+          pythonExePath = p.join(appDirectory, 'python_runtime', 'python.exe');
+        }
+
+        final directory = await getTemporaryDirectory();
+        final scriptFile = File('${directory.path}/flow_script.py');
+        await scriptFile.writeAsString(code);
+
+        if (!await File(pythonExePath).exists()) {
+          return "Error: Python executable not found at $pythonExePath";
+        }
+
+        var shell = Shell();
+        var result = await shell.run('"$pythonExePath" "${scriptFile.path}"');
+        return result.first.stdout.isNotEmpty ? result.first.stdout : "Finished.";
+      }
+    } catch (e) {
+      return "Failed: $e";
+    }
   }
 
   void _resetFlowchart() {
@@ -203,13 +247,11 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
                 backgroundColor: Colors.grey[850],
                 title: const Text("Blocks", style: TextStyle(color: Colors.white)),
                 children: [
-                  // GestureDetector makes the whole area sensitive to swipes
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     child: Container(
                       height: 120,
                       width: double.infinity,
-                      // Adding horizontal margin creates a swipe-safe zone
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: const FlowchartPalette(),
                     ),

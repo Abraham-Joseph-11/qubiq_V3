@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
-import '../../Models/BlockModels.dart';
+import 'package:little_emmi/Models/BlockModels.dart';
 import '../../Providers/block_provider.dart';
 
 class BlockCanvas extends StatefulWidget {
@@ -81,7 +81,7 @@ class _BlockCanvasState extends State<BlockCanvas> {
                   ));
                 },
                 builder: (context, _, __) => InteractiveViewer(
-                  key: const ValueKey('MainInteractiveCanvas'),
+                  key: _canvasKey,
                   transformationController: _transformationController,
                   boundaryMargin: const EdgeInsets.all(double.infinity),
                   minScale: 0.1,

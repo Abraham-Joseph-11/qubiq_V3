@@ -6,9 +6,17 @@ import '../../Models/AdminModels.dart';
 
 // Mock list of all apps and their icons/routes for the Student to use
 const Map<String, dynamic> appRoutes = {
-  'Little Emmi': {'route': '/app/robot_workspace', 'icon': Icons.child_care_outlined},
-  'Flowchart Coder': {'route': '/app/flowchart_ide', 'icon': Icons.account_tree_outlined},
+  'Little Emmi': {
+    'route': '/app/robot_workspace',
+    'icon': Icons.child_care_outlined
+  },
+  'Flowchart Coder': {
+    'route': '/app/flowchart_ide',
+    'icon': Icons.account_tree_outlined
+  },
   'MIT App Inventor': {'route': '/mit/login', 'icon': Icons.extension_outlined},
+  'AntiPython': {'route': '/app/antipython', 'icon': Icons.web},
+  'PyBlock': {'route': '/app/pyblock', 'icon': Icons.extension}, // <-- ADDED
   'Python IDE': {'route': '/app/python_ide', 'icon': Icons.code_outlined},
 };
 
@@ -41,7 +49,6 @@ class StudentDashboardScreen extends StatelessWidget {
       return assignments[appName] == true;
     }).toList();
 
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -49,7 +56,8 @@ class StudentDashboardScreen extends StatelessWidget {
           onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
           tooltip: 'Logout',
         ),
-        title: Text('Student Dashboard (Grade $assignedGrade)', style: GoogleFonts.poppins()),
+        title: Text('Student Dashboard (Grade $assignedGrade)',
+            style: GoogleFonts.poppins()),
         backgroundColor: Colors.indigo,
       ),
       body: SingleChildScrollView(
@@ -59,7 +67,10 @@ class StudentDashboardScreen extends StatelessWidget {
           children: [
             Text(
               'Welcome, Student!',
-              style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+              style: GoogleFonts.poppins(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
             ),
             const SizedBox(height: 20),
 
@@ -68,9 +79,12 @@ class StudentDashboardScreen extends StatelessWidget {
               elevation: 4,
               child: ListTile(
                 leading: const Icon(Icons.menu_book, color: Colors.teal),
-                title: Text('Current Chapter', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                title: Text('Current Chapter',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                 // The assignedChapter will read "Chapter 1: Basics" from the mock data
-                subtitle: Text(assignedChapter, style: GoogleFonts.poppins(fontSize: 18, color: Colors.white)),
+                subtitle: Text(assignedChapter,
+                    style:
+                        GoogleFonts.poppins(fontSize: 18, color: Colors.white)),
               ),
             ),
             const SizedBox(height: 30),
@@ -78,7 +92,10 @@ class StudentDashboardScreen extends StatelessWidget {
             // --- 2. ASSIGNED APPS (Clickable) ---
             Text(
               'Assigned Coding Tools:',
-              style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.indigo),
+              style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.indigo),
             ),
             const SizedBox(height: 10),
 
@@ -114,12 +131,15 @@ class StudentDashboardScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(12.0),
                         child: Row(
                           children: [
-                            Icon(appData['icon'], size: 30, color: Colors.green.shade700),
+                            Icon(appData['icon'],
+                                size: 30, color: Colors.green.shade700),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 appName,
-                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.green.shade800),
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green.shade800),
                               ),
                             ),
                           ],

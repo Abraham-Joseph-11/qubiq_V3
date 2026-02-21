@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:little_emmi/Screens/inappwebview_screen.dart';
+import 'package:little_emmi/Screens/MIT/mobile_inventor_screen.dart'; // ADDED
 
 class MitDashboardScreen extends StatelessWidget {
   const MitDashboardScreen({super.key});
@@ -28,6 +29,9 @@ class MitDashboardScreen extends StatelessWidget {
             _buildHeader(),
             const SizedBox(height: 30),
             _buildLaunchCard(context, cardColor),
+            const SizedBox(height: 16), // Spacing
+            _buildOfflineLaunchCard(context, cardColor), // ADDED
+            const SizedBox(height: 30),
             const SizedBox(height: 30),
             _buildFeaturesSection(cardColor),
           ],
@@ -117,6 +121,64 @@ class MitDashboardScreen extends StatelessWidget {
         ),
       ),
     ).animate().scaleXY(delay: 200.ms, duration: 500.ms, curve: Curves.elasticOut);
+  }
+
+  Widget _buildOfflineLaunchCard(BuildContext context, Color cardColor) {
+    return Material(
+      color: cardColor,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 5,
+      shadowColor: Colors.black.withOpacity(0.5),
+      child: InkWell(
+        onTap: () {
+          // Navigate to the Offline MobileInventorScreen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MobileInventorScreen(),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFA000), Color(0xFFFF6D00)], // Orange Gradient
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 40),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Launch Offline Editor',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Use local Mobile Inventor (No Internet)',
+                      style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.9), fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().scaleXY(delay: 300.ms, duration: 500.ms, curve: Curves.elasticOut);
   }
 
   Widget _buildFeaturesSection(Color cardColor) {

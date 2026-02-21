@@ -1,11 +1,9 @@
-import 'dart:convert';
+// import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
-import 'package:little_emmi/Screens/Help/app_knowledge.dart';
-import 'package:little_emmi/secrets.dart';
+import 'package:little_emmi/Services/proxy_service.dart';
 
 class HelpChatScreen extends StatefulWidget {
   const HelpChatScreen({super.key});
@@ -39,59 +37,26 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
       author: _bot,
       createdAt: DateTime.now().millisecondsSinceEpoch,
       id: const Uuid().v4(),
-      text: "Hi! I'm EmmiBot 🤖. I can help you with your robot, your code, or AI tools. What are we building today?",
+      text:
+          "Hi! I'm EmmiBot 🤖. I can help you with your robot, your code, or AI tools. What are we building today?",
     ));
   }
 
   Future<void> _sendMessageToGemini(String text) async {
-    const model = 'gemini-flash-latest';
-    final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$googleGeminiApiKey'
-    );
-
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "system_instruction": {
-            "parts": [
-              {"text": appKnowledgeBase} // ✅ Uses the new Hybrid Brain
-            ]
-          },
-          "contents": [
-            {
-              "parts": [
-                {"text": text}
-              ]
-            }
-          ]
-        }),
+      final botReply = await ProxyService().sendRequest(
+        prompt: text,
+        botType: 'help_bot',
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        String botReply = "I'm having a little trouble thinking right now.";
-
-        if (data['candidates'] != null && data['candidates'].isNotEmpty) {
-          final parts = data['candidates'][0]['content']['parts'];
-          if (parts != null && parts.isNotEmpty) {
-            botReply = parts[0]['text'];
-          }
-        }
-
-        _addMessage(types.TextMessage(
-          author: _bot,
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-          id: const Uuid().v4(),
-          text: botReply,
-        ));
-      } else {
-        debugPrint("🔴 API ERROR: ${response.body}");
-        _showError("My brain is offline (Error: ${response.statusCode})");
-      }
+      _addMessage(types.TextMessage(
+        author: _bot,
+        createdAt: DateTime.now().millisecondsSinceEpoch,
+        id: const Uuid().v4(),
+        text: botReply,
+      ));
     } catch (e) {
-      debugPrint("🔴 CONNECTION ERROR: $e");
+      debugPrint("🔴 PROXY ERROR: $e");
       _showError("I can't reach the server. Check your internet!");
     }
   }
@@ -134,7 +99,8 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text("EmmiBot Help", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        title: const Text("EmmiBot Help",
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0.5,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -156,7 +122,8 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
                     side: BorderSide(color: Colors.purple.withOpacity(0.2)),
                     label: Text(
                       _quickQuestions[index],
-                      style: TextStyle(color: Colors.purple.shade700, fontSize: 13),
+                      style: TextStyle(
+                          color: Colors.purple.shade700, fontSize: 13),
                     ),
                     onPressed: () => _handleSend(_quickQuestions[index]),
                   ),
@@ -176,8 +143,8 @@ class _HelpChatScreenState extends State<HelpChatScreen> {
                   primaryColor: Colors.deepPurple,
                   secondaryColor: Colors.white,
                   inputBackgroundColor: Color(0xFFEFF6FF),
-                  userNameTextStyle: TextStyle(fontFamily: 'Avenir', fontWeight: FontWeight.bold)
-              ),
+                  userNameTextStyle: TextStyle(
+                      fontFamily: 'Avenir', fontWeight: FontWeight.bold)),
             ),
           ),
         ],

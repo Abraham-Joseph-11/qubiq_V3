@@ -1,6 +1,6 @@
 pluginManagement {
     def flutterSdkPath = {
-        def properties = new Properties()
+        def properties = new java.util.Properties()
         file("local.properties").withInputStream { properties.load(it) }
         def flutterSdkPath = properties.getProperty("flutter.sdk")
         assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
@@ -18,13 +18,11 @@ pluginManagement {
 
 plugins {
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
-    // Update to 8.7.0 (Matches Gradle 8.10)
-    id "com.android.application" version "8.7.0" apply false
-    // START: FlutterFire Configuration
+
+    // ✅ FORCE SAFE VERSIONS HERE (This fixes the override)
+    id "com.android.application" version "8.2.1" apply false
+    id "org.jetbrains.kotlin.android" version "1.9.24" apply false
     id "com.google.gms.google-services" version "4.3.15" apply false
-    // END: FlutterFire Configuration
-    // Update to 2.1.0 (As requested by the warning)
-    id "org.jetbrains.kotlin.android" version "2.1.0" apply false
 }
 
 include ":app"

@@ -3,9 +3,14 @@ plugins {
     // START: FlutterFire Configuration
     id 'com.google.gms.google-services'
     // END: FlutterFire Configuration
-    id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+
+    // ✅ UPDATED: Use the modern Kotlin plugin ID
+    id "org.jetbrains.kotlin.android"
+
     id "dev.flutter.flutter-gradle-plugin"
+
+    // ✅ Chaquopy Plugin
+    id "com.chaquo.python"
 }
 
 android {
@@ -22,30 +27,32 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8
     }
 
-    // --- FIX START: Force older compatible versions ---
+    // Force older compatible versions (Keep this if it solves your specific crash)
     configurations.all {
         resolutionStrategy {
             force 'androidx.activity:activity:1.10.1'
             force 'androidx.activity:activity-ktx:1.10.1'
         }
     }
-    // --- FIX END ---
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.little_emmi"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 24  // <--- Was 'flutter.minSdkVersion'. ARCore requires 24 (Android 7.0)
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Chaquopy Configuration
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
+        python {
+            version "3.8"
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
         }
     }

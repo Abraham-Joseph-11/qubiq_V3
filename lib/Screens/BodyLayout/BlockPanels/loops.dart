@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
-import '../../../Models/BlockModels.dart';
+import 'package:little_emmi/Models/BlockModels.dart';
 import '../../../Providers/block_provider.dart';
 
 class Loop extends StatefulWidget {

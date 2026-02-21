@@ -1,17 +1,13 @@
 // lib/Screens/ai_chat_screen.dart
 
-import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:little_emmi/Services/proxy_service.dart';
 
 class AiChatScreen extends StatefulWidget {
-  final String apiKey; // 1. Variable to hold the key
-
-  // 2. Constructor requires the key
-  const AiChatScreen({super.key, required this.apiKey});
+  const AiChatScreen({super.key});
 
   @override
   State<AiChatScreen> createState() => _AiChatScreenState();
@@ -22,9 +18,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<_ChatMessage> _messages = [];
   bool _isSending = false;
-
-  // ✅ Model Name
-  final String _modelName = 'gemini-flash-latest';
 
   // Suggestions for empty state
   final List<String> _suggestions = [
@@ -47,56 +40,22 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _scrollToBottom();
 
     try {
-      final cleanModelName = _modelName.replaceAll('models/', '');
-
-      // ---------------------------------------------------------
-      // 🔑 CRITICAL FIX: Using 'widget.apiKey' here
-      // ---------------------------------------------------------
-      final url = Uri.parse(
-          'https://generativelanguage.googleapis.com/v1beta/models/$cleanModelName:generateContent?key=${widget.apiKey}');
-
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "contents": [
-            {
-              "parts": [{"text": text}]
-            }
-          ]
-        }),
+      final responseText = await ProxyService().sendRequest(
+        prompt: text,
+        botType: 'neural_chat',
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        String reply = "I'm sorry, I couldn't understand that.";
-
-        if (data['candidates'] != null && data['candidates'].isNotEmpty) {
-          final parts = data['candidates'][0]['content']['parts'];
-          if (parts != null && parts.isNotEmpty) {
-            reply = parts[0]['text'] ?? reply;
-          }
-        }
-
-        if (mounted) {
-          setState(() {
-            _messages.add(_ChatMessage(role: 'assistant', text: reply));
-          });
-          _scrollToBottom();
-        }
-      } else {
-        final errorData = jsonDecode(response.body);
-        final errorMsg = errorData['error']['message'] ?? 'Unknown Error';
-        if (mounted) {
-          setState(() {
-            _messages.add(_ChatMessage(role: 'error', text: '⚠️ API Error: $errorMsg'));
-          });
-        }
+      if (mounted) {
+        setState(() {
+          _messages.add(_ChatMessage(role: 'assistant', text: responseText));
+        });
+        _scrollToBottom();
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add(_ChatMessage(role: 'error', text: '⚠️ Connection Error: $e'));
+          _messages.add(
+              _ChatMessage(role: 'error', text: '⚠️ Error: ${e.toString()}'));
         });
       }
     } finally {
@@ -132,7 +91,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 color: Colors.purple.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.auto_awesome, color: Colors.deepPurple, size: 20),
+              child: const Icon(Icons.auto_awesome,
+                  color: Colors.deepPurple, size: 20),
             ),
             const SizedBox(width: 10),
             Column(
@@ -140,11 +100,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
               children: [
                 Text(
                   'QubiQAI',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.black87),
                 ),
                 Text(
                   'AI Tutor',
-                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.deepPurple),
+                  style: GoogleFonts.poppins(
+                      fontSize: 10, color: Colors.deepPurple),
                 ),
               ],
             ),
@@ -175,16 +139,16 @@ class _AiChatScreenState extends State<AiChatScreen> {
               child: _messages.isEmpty
                   ? _buildEmptyState()
                   : ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 120, 16, 20),
-                itemCount: _messages.length + (_isSending ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == _messages.length) {
-                    return const _TypingIndicator();
-                  }
-                  return _MessageBubble(message: _messages[index]);
-                },
-              ),
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 120, 16, 20),
+                      itemCount: _messages.length + (_isSending ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == _messages.length) {
+                          return const _TypingIndicator();
+                        }
+                        return _MessageBubble(message: _messages[index]);
+                      },
+                    ),
             ),
             _buildInputArea(),
           ],
@@ -199,16 +163,22 @@ class _AiChatScreenState extends State<AiChatScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.psychology, size: 80, color: Colors.deepPurple).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+            const Icon(Icons.psychology, size: 80, color: Colors.deepPurple)
+                .animate()
+                .scale(duration: 600.ms, curve: Curves.elasticOut),
             const SizedBox(height: 20),
             Text(
               "Hello! I'm QubiQAI.",
-              style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey[800]),
+              style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueGrey[800]),
             ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3),
             const SizedBox(height: 10),
             Text(
               "What would you like to learn today?",
-              style: GoogleFonts.poppins(fontSize: 14, color: Colors.blueGrey[500]),
+              style: GoogleFonts.poppins(
+                  fontSize: 14, color: Colors.blueGrey[500]),
             ).animate().fadeIn(delay: 400.ms),
             const SizedBox(height: 40),
             Wrap(
@@ -217,11 +187,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
               alignment: WrapAlignment.center,
               children: _suggestions.map((suggestion) {
                 return ActionChip(
-                  label: Text(suggestion, style: GoogleFonts.poppins(fontSize: 12)),
+                  label: Text(suggestion,
+                      style: GoogleFonts.poppins(fontSize: 12)),
                   backgroundColor: Colors.white,
                   elevation: 2,
                   shadowColor: Colors.black12,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   onPressed: () => _sendMessage(manualText: suggestion),
                 ).animate().fadeIn(delay: 600.ms).slideX();
               }).toList(),
@@ -239,7 +211,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
         color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5)),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, -5)),
         ],
       ),
       child: SafeArea(
@@ -262,7 +237,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     hintText: 'Type your question...',
                     hintStyle: GoogleFonts.poppins(color: Colors.grey[400]),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                   ),
                   onSubmitted: (_) => _sendMessage(),
                 ),
@@ -282,10 +258,14 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
-                    BoxShadow(color: Colors.purple.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 4)),
+                    BoxShadow(
+                        color: Colors.purple.withOpacity(0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4)),
                   ],
                 ),
-                child: const Icon(Icons.send_rounded, color: Colors.white, size: 22),
+                child: const Icon(Icons.send_rounded,
+                    color: Colors.white, size: 22),
               ),
             ).animate(target: _isSending ? 0 : 1).scale(duration: 200.ms),
           ],
@@ -311,18 +291,23 @@ class _MessageBubble extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
         padding: const EdgeInsets.all(16),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+        constraints:
+            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
         decoration: BoxDecoration(
           gradient: isUser
-              ? const LinearGradient(colors: [Colors.deepPurple, Colors.purpleAccent])
+              ? const LinearGradient(
+                  colors: [Colors.deepPurple, Colors.purpleAccent])
               : isError
-              ? LinearGradient(colors: [Colors.red.shade400, Colors.red.shade600])
-              : const LinearGradient(colors: [Colors.white, Colors.white]),
+                  ? LinearGradient(
+                      colors: [Colors.red.shade400, Colors.red.shade600])
+                  : const LinearGradient(colors: [Colors.white, Colors.white]),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),
-            bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(4),
-            bottomRight: isUser ? const Radius.circular(4) : const Radius.circular(20),
+            bottomLeft:
+                isUser ? const Radius.circular(20) : const Radius.circular(4),
+            bottomRight:
+                isUser ? const Radius.circular(4) : const Radius.circular(20),
           ),
           boxShadow: [
             BoxShadow(
@@ -361,14 +346,18 @@ class _MessageBubble extends StatelessWidget {
               message.text,
               style: GoogleFonts.poppins(
                 fontSize: 14,
-                color: (isUser || isError) ? Colors.white : Colors.blueGrey[900],
+                color:
+                    (isUser || isError) ? Colors.white : Colors.blueGrey[900],
                 height: 1.5,
               ),
             ),
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, curve: Curves.easeOut);
+    )
+        .animate()
+        .fadeIn(duration: 300.ms)
+        .slideY(begin: 0.1, curve: Curves.easeOut);
   }
 }
 

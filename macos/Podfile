@@ -49,11 +49,11 @@ post_install do |installer|
     end
 
     # CocoaPods 1.16+ compatible way to silence symlink warnings
-    target.shell_script_build_phases.each do |phase|
+    target.build_phases.grep(Xcodeproj::Project::Object::PBXShellScriptBuildPhase).each do |phase|
       if phase.name == "Create Symlinks to Header Folders"
         phase.input_paths = []
         phase.output_paths = []
-        # NOTE: Do NOT call run_only_when_installed= (removed in CocoaPods 1.16+)
+        phase.always_out_of_date = "1"
       end
     end
   end

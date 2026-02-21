@@ -1,6 +1,7 @@
 // lib/Screens/python_ide_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Needed for MethodChannel
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,6 +28,9 @@ class _PythonIdeScreenState extends State<PythonIdeScreen> {
   String _output = "Your script's output will appear here.";
   bool _isLoading = false;
 
+  // Platform channel for Android communication
+  static const platformChannel = MethodChannel('com.qubiq.app/python');
+
   Future<void> _runPythonScript() async {
     setState(() {
       _isLoading = true;
@@ -34,24 +38,55 @@ class _PythonIdeScreenState extends State<PythonIdeScreen> {
     });
 
     try {
-      String appDirectory = p.dirname(Platform.resolvedExecutable);
-      String pythonExePath = p.join(appDirectory, 'python_runtime', 'python.exe');
-      final directory = await getTemporaryDirectory();
-      final scriptFile = File('${directory.path}/temp_script.py');
-      await scriptFile.writeAsString(controller.text);
+      if (Platform.isAndroid) {
+        // --- Android Execution (via Chaquopy/MethodChannel) ---
+        try {
+          final String result = await platformChannel.invokeMethod('runPython', {
+            'code': controller.text,
+          });
+          _output = result;
+        } on PlatformException catch (e) {
+          _output = "Failed to run on Android: '${e.message}'.\nEnsure Chaquopy is configured in your MainActivity.";
+        }
 
-      if (!await File(pythonExePath).exists()) {
-        _output = "Error: Bundled Python executable not found.\nExpected at: $pythonExePath";
       } else {
-        var shell = Shell();
-        var result = await shell.run('"$pythonExePath" "${scriptFile.path}"');
+        // --- Desktop Execution (Windows/macOS) ---
+        String appDirectory = p.dirname(Platform.resolvedExecutable);
+        String pythonExePath;
 
-        if (result.first.stdout.isNotEmpty) {
-          _output = result.first.stdout;
-        } else if (result.first.stderr.isNotEmpty) {
-          _output = "Error:\n${result.first.stderr}";
+        if (Platform.isMacOS) {
+          // On macOS, the executable is inside Contents/MacOS.
+          // We generally bundle resources in Contents/Resources.
+          // Path: .../App.app/Contents/MacOS/../Resources/python_runtime/python
+          pythonExePath = p.join(
+              p.dirname(p.dirname(Platform.resolvedExecutable)),
+              'Resources',
+              'python_runtime',
+              'python' // No .exe extension on Mac
+          );
         } else {
-          _output = "Script finished with no output.";
+          // Windows: Relative to the .exe
+          pythonExePath = p.join(appDirectory, 'python_runtime', 'python.exe');
+        }
+
+        final directory = await getTemporaryDirectory();
+        final scriptFile = File('${directory.path}/temp_script.py');
+        await scriptFile.writeAsString(controller.text);
+
+        if (!await File(pythonExePath).exists()) {
+          _output = "Error: Bundled Python executable not found.\nExpected at: $pythonExePath\n\n(On macOS, ensure the runtime is in Contents/Resources)";
+        } else {
+          var shell = Shell();
+          // Escape spaces in paths for safety
+          var result = await shell.run('"$pythonExePath" "${scriptFile.path}"');
+
+          if (result.first.stdout.isNotEmpty) {
+            _output = result.first.stdout;
+          } else if (result.first.stderr.isNotEmpty) {
+            _output = "Error:\n${result.first.stderr}";
+          } else {
+            _output = "Script finished with no output.";
+          }
         }
       }
     } catch (e) {
@@ -75,7 +110,7 @@ class _PythonIdeScreenState extends State<PythonIdeScreen> {
       appBar: AppBar(
         title: const Text("Python IDE"),
         backgroundColor: Colors.grey[900],
-        foregroundColor: Colors.white, // ✅ FIX: Makes Title & Back Button White
+        foregroundColor: Colors.white,
         actions: [
           if (_isLoading)
             const Center(child: CircularProgressIndicator(color: Colors.white))
@@ -96,18 +131,15 @@ class _PythonIdeScreenState extends State<PythonIdeScreen> {
             child: CodeTheme(
               data: CodeThemeData(styles: monokaiSublimeTheme),
               child: Container(
-                // ✅ FIX: Forces Dark Background (Removes the white gap)
                 color: const Color(0xFF272822),
                 width: double.infinity,
                 child: SingleChildScrollView(
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
-                      // Keep width responsive but large enough for code
                       width: MediaQuery.of(context).size.width > 600 ? 1000 : 800,
                       child: CodeField(
                         controller: controller,
-                        // ✅ FIX: Smaller Font Size (12) to reduce scrolling
                         textStyle: GoogleFonts.robotoMono(fontSize: 12),
                       ),
                     ),

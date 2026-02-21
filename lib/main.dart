@@ -3,11 +3,13 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Providers
 import 'package:little_emmi/Providers/block_provider.dart';
-import 'Services/bluetooth_manager.dart';
+// import 'package:little_emmi/Providers/api_key_provider.dart'; // REMOVED
+import 'package:little_emmi/Services/bluetooth_manager.dart';
 
 // Firebase
 import 'package:firebase_core/firebase_core.dart';
@@ -16,9 +18,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 
 // Screens
-import 'Screens/BodyLayout/body_layout.dart';
-import 'Screens/TopBar/top_bar.dart';
-import 'package:camera_windows/camera_windows.dart';
+import 'package:little_emmi/Screens/BodyLayout/body_layout.dart';
+import 'package:little_emmi/Screens/TopBar/top_bar.dart';
+// import 'package:camera_windows/camera_windows.dart';
 
 import 'package:little_emmi/Screens/Auth/login_screen.dart';
 import 'package:little_emmi/Screens/Auth/activation_screen.dart';
@@ -27,6 +29,14 @@ import 'package:little_emmi/Screens/Auth/teacher_dashboard.dart';
 import 'package:little_emmi/Screens/Dashboard/admin_dashboard.dart';
 import 'package:little_emmi/Screens/MIT/mit_dashboard_screen.dart';
 import 'package:little_emmi/Screens/MIT/mit_login_screen.dart';
+import 'package:little_emmi/Screens/MIT/mobile_inventor_screen.dart'; 
+import 'package:little_emmi/screens/antipython/webview_screen.dart';
+import 'package:little_emmi/screens/pyblock/webview_screen.dart';
+import 'package:little_emmi/Screens/presentation_webview_screen.dart';
+import 'package:little_emmi/Screens/excel_webview_screen.dart';
+import 'package:little_emmi/Screens/word_webview_screen.dart';
+
+import 'package:little_emmi/Services/keep_alive_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +51,7 @@ class QubiQApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => BlockProvider()),
+        // ChangeNotifierProvider(create: (_) => ApiKeyProvider()), // REMOVED
         ChangeNotifierProvider(create: (_) => BluetoothManager()),
       ],
       child: MaterialApp(
@@ -59,16 +70,22 @@ class QubiQApp extends StatelessWidget {
           '/auth/teacher': (_) => const TeacherDashboardScreen(),
           '/mit/login': (_) => const MitLoginScreen(),
           '/mit/dashboard': (_) => const MitDashboardScreen(),
+          '/mit/mobile_inventor': (_) => const MobileInventorScreen(),
+          '/app/antipython': (_) => const WebViewScreen(),
+          '/app/pyblock': (_) => const PyBlocksWebview(),
+          '/presentation': (_) => const PresentationWebViewScreen(),
+          '/excel': (_) => const ExcelWebViewScreen(),
+          '/word': (_) => const WordWebViewScreen(),
           '/app/robot_workspace': (_) => const Scaffold(
-            body: SafeArea(
-              child: Column(
-                children: [
-                  TopBar(),
-                  Expanded(child: BodyLayout()),
-                ],
+                body: SafeArea(
+                  child: Column(
+                    children: [
+                      TopBar(),
+                      Expanded(child: BodyLayout()),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
         },
       ),
     );
@@ -93,20 +110,25 @@ class _RobotLaunchScreenState extends State<RobotLaunchScreen> {
   }
 
   Future<void> _initializeApp() async {
+    // Start backend keep-alive pinger
+    KeepAliveService().start();
+    
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // ✅ AUTO LOGOUT ONLY ON DESKTOP
-    if (Platform.isWindows || Platform.isMacOS) {
+    // ✅ AUTO LOGOUT ONLY ON DESKTOP (Guard against Web crash)
+    if (!kIsWeb && (Platform.isWindows || Platform.isMacOS)) {
       await FirebaseAuth.instance.signOut();
     }
 
-    if (Platform.isWindows) {
+    /*
+    if (!kIsWeb && Platform.isWindows) {
       try {
         CameraWindows.registerWith();
       } catch (_) {}
     }
+    */
 
     final prefs = await SharedPreferences.getInstance();
     final isActivated = prefs.getBool('is_activated') ?? false;
@@ -158,6 +180,14 @@ class AuthWrapper extends StatelessWidget {
         if (!authSnap.hasData) {
           return const LittleEmmiLoginScreen();
         }
+
+        // 🔍 DEBUG: Print Firebase ID Token for Backend Testing
+        authSnap.data!.getIdToken().then((token) {
+          debugPrint(
+              "\n👇👇👇 FIREBASE ID TOKEN (COPY THIS for Curl/Postman) 👇👇👇");
+          debugPrint(token);
+          debugPrint("👆👆👆 END TOKEN 👆👆👆\n");
+        });
 
         return FutureBuilder<Widget>(
           future: _resolveDashboard(authSnap.data!),

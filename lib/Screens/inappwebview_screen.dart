@@ -28,7 +28,11 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
   final _revisitCodeController = TextEditingController();
 
   // Helper to check if we are currently running an Office/Microsoft app
-  bool get _isOfficeApp => widget.url.contains('microsoft') || widget.url.contains('office') || widget.url.contains('bing');
+  bool get _isOfficeApp =>
+      widget.url.contains('microsoft') ||
+      widget.url.contains('office') ||
+      widget.url.contains('bing') ||
+      widget.url.contains('amplifyapp');
 
   // Helper to check if we are using MIT App Inventor
   bool get _isMitApp => widget.url.contains('mit.edu');
@@ -68,7 +72,8 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
               cacheEnabled: true,
               domStorageEnabled: true,
               databaseEnabled: true,
-              thirdPartyCookiesEnabled: true, // Required for Google/Microsoft Auth
+              thirdPartyCookiesEnabled:
+                  true, // Required for Google/Microsoft Auth
               sharedCookiesEnabled: true, // iOS specific
               saveFormData: true,
 
@@ -86,7 +91,16 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
               // 4. Media Settings (Important for Suno AI music playback)
               mediaPlaybackRequiresUserGesture: false,
               allowsInlineMediaPlayback: true,
+              useShouldInterceptRequest: true,
+              hardwareAcceleration: true,
             ),
+
+            onPermissionRequest: (controller, request) async {
+              return PermissionResponse(
+                resources: request.resources,
+                action: PermissionResponseAction.GRANT,
+              );
+            },
 
             onWebViewCreated: (controller) {
               _webViewController = controller;
@@ -129,12 +143,12 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
             LinearProgressIndicator(
               value: _progress,
               backgroundColor: Colors.transparent,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.tealAccent),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Colors.tealAccent),
             ),
 
           // --- MIT SPECIFIC OVERLAY ---
-          if (_showRevisitCodePopup)
-            _buildRevisitCodePopup(context),
+          if (_showRevisitCodePopup) _buildRevisitCodePopup(context),
         ],
       ),
     );
@@ -198,7 +212,8 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Scroll to find the code.',
-                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.8), fontSize: 14),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -210,7 +225,8 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
                     labelStyle: const TextStyle(color: Colors.white70),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.white.withOpacity(0.5)),
+                      borderSide:
+                          BorderSide(color: Colors.white.withOpacity(0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -223,7 +239,8 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                      child: const Text('Cancel',
+                          style: TextStyle(color: Colors.white70)),
                       onPressed: () {
                         _revisitCodeController.clear();
                         FocusScope.of(context).unfocus();
@@ -264,7 +281,8 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('MIT App Inventor Login'),
-          content: const Text('Please log in with your Google account to continue.'),
+          content:
+              const Text('Please log in with your Google account to continue.'),
           actions: [
             TextButton(
               child: const Text('OK'),

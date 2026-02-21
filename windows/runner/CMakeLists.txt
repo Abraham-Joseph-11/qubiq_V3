@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.20)
 project(runner LANGUAGES CXX)
 
 # Define the application target. To change its name, change BINARY_NAME in the
@@ -38,3 +38,11 @@ target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
+
+add_custom_command(
+        TARGET ${BINARY_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/../python_runtime"
+        "$<TARGET_FILE_DIR:${BINARY_NAME}>/python_runtime"
+        COMMENT "Copying python_runtime to build output..."
+)

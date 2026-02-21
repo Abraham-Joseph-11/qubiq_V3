@@ -1,4 +1,3 @@
-
 // Model for Institutions (Managed by Super Admin)
 class MockInstitution {
   final String id;
@@ -6,12 +5,11 @@ class MockInstitution {
   int teacherCount; // <-- ADDED this getter for the Super Admin screen
   bool canUseMIT; // Example: App access control
 
-  MockInstitution({
-    required this.id,
-    required this.name,
-    this.teacherCount = 0, // Default to 0, will be updated by Admin
-    this.canUseMIT = true
-  });
+  MockInstitution(
+      {required this.id,
+      required this.name,
+      this.teacherCount = 0, // Default to 0, will be updated by Admin
+      this.canUseMIT = true});
 }
 
 // Model for Teachers (Managed by Institution Admin)
@@ -23,11 +21,14 @@ class MockTeacher {
 
 // This map holds assignments for all grades (e.g., Grade 8)
   final Map<int, Map<String, dynamic>> _globalAssignments = {
-    8: { // Default assignments for Grade 8
+    8: {
+      // Default assignments for Grade 8
       'chapter': 'Chapter 1: Basics',
       'Little Emmi': false,
       'Flowchart Coder': true,
       'MIT App Inventor': false,
+      'AntiPython': true, // <-- ADDED
+      'PyBlock': true, // <-- ADDED
       'Python IDE': false,
     }
   };
@@ -59,5 +60,4 @@ class MockTeacher {
       _globalAssignments[gradeLevel]![key] = value;
     }
   }
-
 }

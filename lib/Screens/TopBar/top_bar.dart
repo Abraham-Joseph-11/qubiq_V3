@@ -6,7 +6,14 @@ import '../../Providers/block_provider.dart';
 import '../../Services/bluetooth_manager.dart';
 
 class TopBar extends StatelessWidget implements PreferredSizeWidget {
-  const TopBar({super.key});
+  final String title;
+  final bool showActions; // New parameter
+
+  const TopBar({
+    super.key,
+    this.title = 'Little Emmi',
+    this.showActions = true, // Default to true to keep existing behavior
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +29,8 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8), // Reduced padding
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey[300]!, width: 1.0)),
+        border:
+            Border(bottom: BorderSide(color: Colors.grey[300]!, width: 1.0)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -37,51 +45,55 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
           // 2. Heading: "Little Emmi"
           // ✅ Reduced font size on small screens to prevent overflow
           Text(
-            'Little Emmi',
+            title,
             style: TextStyle(
                 color: const Color(0xFF007AFF),
                 fontSize: isSmallMobile ? 16 : 20,
-                fontWeight: FontWeight.bold
-            ),
+                fontWeight: FontWeight.bold),
           ),
 
           // 3. Dynamic Spacer
           SizedBox(width: isSmallMobile ? 4 : 12),
 
-          // 4. Connect Button
-          _menuItem(
-            Icons.electrical_services_outlined,
-            // ✅ Only show label if there is enough space
-            isSmallMobile ? "" : (bluetooth.isConnected ? 'Connected' : 'Connect'),
-            iconColor: bluetooth.isConnected ? Colors.green : Colors.grey[700],
-            onTap: () => _showBluetoothDialog(context),
-          ),
+          // 4. Connect Button (Only if showActions is true)
+          if (showActions)
+            _menuItem(
+              Icons.electrical_services_outlined,
+              // ✅ Only show label if there is enough space
+              isSmallMobile
+                  ? ""
+                  : (bluetooth.isConnected ? 'Connected' : 'Connect'),
+              iconColor:
+                  bluetooth.isConnected ? Colors.green : Colors.grey[700],
+              onTap: () => _showBluetoothDialog(context),
+            ),
 
           const Spacer(),
 
           // 5. Action Buttons (Test & Reset)
           // ✅ Wrapped in a Row with mainAxisSize.min to stay compact
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _actionButton(
-                icon: Icons.check_circle_outline,
-                label: 'Test',
-                isMobile: isSmallMobile,
-                color: const Color(0xFF007AFF),
-                onPressed: () => bluetooth.sendData("F"),
-              ),
-              const SizedBox(width: 8),
-              _actionButton(
-                icon: Icons.refresh,
-                label: 'Reset',
-                isMobile: isSmallMobile,
-                color: Colors.grey[700]!,
-                onPressed: () => provider.resetRobotPosition(),
-                isOutlined: true,
-              ),
-            ],
-          ),
+          if (showActions)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _actionButton(
+                  icon: Icons.check_circle_outline,
+                  label: 'Test',
+                  isMobile: isSmallMobile,
+                  color: const Color(0xFF007AFF),
+                  onPressed: () => bluetooth.sendData("F"),
+                ),
+                const SizedBox(width: 8),
+                _actionButton(
+                  icon: Icons.refresh,
+                  label: 'Reset',
+                  isMobile: isSmallMobile,
+                  color: Colors.grey[700]!,
+                  onPressed: () => provider.resetRobotPosition(),
+                  isOutlined: true,
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -104,7 +116,9 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
           side: BorderSide(color: Colors.grey[400]!),
           minimumSize: const Size(40, 40),
         ),
-        child: isMobile ? Icon(icon, color: color, size: 20) : Text(label, style: TextStyle(color: color)),
+        child: isMobile
+            ? Icon(icon, color: color, size: 20)
+            : Text(label, style: TextStyle(color: color)),
       );
     }
     return ElevatedButton(
@@ -114,7 +128,9 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
         backgroundColor: color,
         minimumSize: const Size(40, 40),
       ),
-      child: isMobile ? Icon(icon, color: Colors.white, size: 20) : Text(label, style: const TextStyle(color: Colors.white)),
+      child: isMobile
+          ? Icon(icon, color: Colors.white, size: 20)
+          : Text(label, style: const TextStyle(color: Colors.white)),
     );
   }
 
@@ -125,20 +141,22 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
       showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: const Text("Disconnect?"),
-            content: Text("Connected to ${bluetooth.connectedDevice?.platformName}"),
-            actions: [
-              TextButton(child: const Text("Cancel"), onPressed: () => Navigator.pop(context)),
-              TextButton(
-                  child: const Text("Disconnect", style: TextStyle(color: Colors.red)),
-                  onPressed: () {
-                    bluetooth.disconnect();
-                    Navigator.pop(context);
-                  }
-              ),
-            ],
-          )
-      );
+                title: const Text("Disconnect?"),
+                content: Text(
+                    "Connected to ${bluetooth.connectedDevice?.platformName}"),
+                actions: [
+                  TextButton(
+                      child: const Text("Cancel"),
+                      onPressed: () => Navigator.pop(context)),
+                  TextButton(
+                      child: const Text("Disconnect",
+                          style: TextStyle(color: Colors.red)),
+                      onPressed: () {
+                        bluetooth.disconnect();
+                        Navigator.pop(context);
+                      }),
+                ],
+              ));
       return;
     }
     bluetooth.startScan();
@@ -158,17 +176,22 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
                   child: StreamBuilder<List<ScanResult>>(
                     stream: bluetooth.scanResults,
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("Scanning..."));
+                      if (!snapshot.hasData || snapshot.data!.isEmpty)
+                        return const Center(child: Text("Scanning..."));
                       final results = snapshot.data!
-                          .where((r) => r.device.platformName.toLowerCase().contains("little emmi"))
+                          .where((r) => r.device.platformName
+                              .toLowerCase()
+                              .contains("little emmi"))
                           .toList();
-                      if (results.isEmpty) return const Center(child: Text("No robots found."));
+                      if (results.isEmpty)
+                        return const Center(child: Text("No robots found."));
                       return ListView.builder(
                         itemCount: results.length,
                         itemBuilder: (context, index) {
                           final device = results[index].device;
                           return ListTile(
-                            leading: const Icon(Icons.smart_toy, color: Colors.indigo),
+                            leading: const Icon(Icons.smart_toy,
+                                color: Colors.indigo),
                             title: Text(device.platformName),
                             trailing: ElevatedButton(
                               child: const Text("Connect"),
@@ -187,23 +210,28 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
           actions: [
-            TextButton(child: const Text("Close"), onPressed: () => Navigator.pop(context))
+            TextButton(
+                child: const Text("Close"),
+                onPressed: () => Navigator.pop(context))
           ],
         );
       },
     );
   }
 
-  Widget _menuItem(IconData icon, String title, {required VoidCallback onTap, Color? iconColor}) {
+  Widget _menuItem(IconData icon, String title,
+      {required VoidCallback onTap, Color? iconColor}) {
     return TextButton(
       onPressed: onTap,
-      style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
+      style: TextButton.styleFrom(
+          padding: EdgeInsets.zero, minimumSize: Size.zero),
       child: Row(
         children: [
           Icon(icon, size: 20, color: iconColor ?? Colors.grey[700]),
           if (title.isNotEmpty) ...[
             const SizedBox(width: 4),
-            Text(title, style: TextStyle(color: Colors.grey[800], fontSize: 13)),
+            Text(title,
+                style: TextStyle(color: Colors.grey[800], fontSize: 13)),
           ],
         ],
       ),

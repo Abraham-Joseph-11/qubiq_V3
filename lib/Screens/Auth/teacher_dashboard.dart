@@ -258,6 +258,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     if (_classes.isEmpty) return const Scaffold(body: Center(child: Text("No classes assigned.")));
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.pushNamed(context, '/presentation'),
+        tooltip: "Test Presentation",
+        child: const Icon(Icons.slideshow),
+      ),
       backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [

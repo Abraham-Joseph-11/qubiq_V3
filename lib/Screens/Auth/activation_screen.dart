@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'dart:io';
 
+// IMPORT YOUR LOGIN SCREEN
 import 'package:little_emmi/Screens/Auth/login_screen.dart';
 
 class ActivationScreen extends StatefulWidget {
@@ -18,6 +19,21 @@ class _ActivationScreenState extends State<ActivationScreen> {
   final TextEditingController _licenseController = TextEditingController();
   bool _isLoading = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // 🚀 BYPASS LOGIC:
+    // This immediately redirects to the Login Screen when this page loads.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen()),
+      );
+    });
+  }
+
+  // --- LOGIC METHODS (KEPT INTACT) ---
 
   Future<String> _getDeviceId() async {
     var deviceInfo = DeviceInfoPlugin();
@@ -42,15 +58,20 @@ class _ActivationScreenState extends State<ActivationScreen> {
   }
 
   Future<void> _verifyLicense() async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
     String inputKey = _licenseController.text.trim();
     if (inputKey.isEmpty) {
-      setState(() { _isLoading = false; _error = "Please enter a valid key."; });
+      setState(() {
+        _isLoading = false;
+        _error = "Please enter a valid key.";
+      });
       return;
     }
 
-    // 🛑 HARDCODED BYPASS
     if (inputKey == "QBIQ-TEST-KEY") {
       await _finalizeActivation();
       return;
@@ -58,8 +79,6 @@ class _ActivationScreenState extends State<ActivationScreen> {
 
     try {
       final firestore = FirebaseFirestore.instance;
-
-      // 1. Search for the key
       QuerySnapshot query = await firestore
           .collection('licenses')
           .where('key', isEqualTo: inputKey)
@@ -67,7 +86,10 @@ class _ActivationScreenState extends State<ActivationScreen> {
           .get();
 
       if (query.docs.isEmpty) {
-        setState(() { _isLoading = false; _error = "Invalid License Key."; });
+        setState(() {
+          _isLoading = false;
+          _error = "Invalid License Key.";
+        });
         return;
       }
 
@@ -75,9 +97,6 @@ class _ActivationScreenState extends State<ActivationScreen> {
       Map<String, dynamic> data = licenseDoc.data() as Map<String, dynamic>;
       String status = data['status'] ?? 'unused';
 
-      // 🔒 STRICT CHECK: ONE-TIME USE ONLY
-      // If status is ANYTHING other than 'unused', we block it.
-      // It does not matter if it's the same device or a new one.
       if (status != 'unused') {
         setState(() {
           _isLoading = false;
@@ -86,19 +105,20 @@ class _ActivationScreenState extends State<ActivationScreen> {
         return;
       }
 
-      // 2. If unused, Activate it (Burn the key)
       String deviceId = await _getDeviceId();
 
       await licenseDoc.reference.update({
         'status': 'active',
-        'linkedDeviceId': deviceId, // We still record WHO used it
+        'linkedDeviceId': deviceId,
         'activatedAt': FieldValue.serverTimestamp(),
       });
 
       await _finalizeActivation();
-
     } catch (e) {
-      setState(() { _isLoading = false; _error = "Connection failed. Check internet."; });
+      setState(() {
+        _isLoading = false;
+        _error = "Connection failed. Check internet.";
+      });
     }
   }
 
@@ -107,10 +127,8 @@ class _ActivationScreenState extends State<ActivationScreen> {
     await prefs.setBool('is_activated', true);
 
     if (!mounted) return;
-    Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen())
-    );
+    Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen()));
   }
 
   Future<void> _resetApp() async {
@@ -121,12 +139,21 @@ class _ActivationScreenState extends State<ActivationScreen> {
       _error = "Memory Wiped! Restart app to re-test.";
     });
     ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("App Reset. Please restart."))
-    );
+        const SnackBar(content: Text("App Reset. Please restart.")));
   }
 
   @override
   Widget build(BuildContext context) {
+    // 1. HIDDEN MODE (Active)
+    // We return a loading spinner so the user sees nothing while redirecting.
+    return const Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(child: CircularProgressIndicator()),
+    );
+
+    /* // 2. ORIGINAL UI (Preserved but Commented Out)
+    // To restore the license page, uncomment this block and delete the return above.
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: Center(
@@ -146,7 +173,7 @@ class _ActivationScreenState extends State<ActivationScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 🔴 RESET BUTTON
+                // RESET BUTTON
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
@@ -174,7 +201,7 @@ class _ActivationScreenState extends State<ActivationScreen> {
                     textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF64748B))),
                 const SizedBox(height: 30),
 
-                // ✅ INPUT FIELD
+                // INPUT FIELD
                 TextField(
                   controller: _licenseController,
                   textAlign: TextAlign.center,
@@ -218,14 +245,16 @@ class _ActivationScreenState extends State<ActivationScreen> {
         ),
       ),
     );
+    */
   }
 }
 
-// --- HELPERS ---
+// --- HELPERS (KEPT INTACT) ---
 
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     return TextEditingValue(
       text: newValue.text.toUpperCase(),
       selection: newValue.selection,
@@ -235,7 +264,8 @@ class UpperCaseTextFormatter extends TextInputFormatter {
 
 class _LicenseKeyFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     if (newValue.text.length < oldValue.text.length) {
       return newValue;
     }
