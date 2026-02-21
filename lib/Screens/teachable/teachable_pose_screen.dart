@@ -48,7 +48,7 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
   }
 
   Future<void> _requestPermissions() async {
-    if (!kIsWeb && Platform.isMacOS) {
+    if (kIsWeb || Platform.isMacOS || Platform.isWindows) {
       return;
     }
     await [Permission.camera, Permission.microphone].request();
@@ -84,10 +84,16 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
                 ),
                 initialSettings: InAppWebViewSettings(
                   isInspectable: kDebugMode,
+                  javaScriptEnabled: true,
+                  domStorageEnabled: true,
+                  hardwareAcceleration: true,
+                  safeBrowsingEnabled: false,
                   mediaPlaybackRequiresUserGesture: false,
                   allowsInlineMediaPlayback: true,
                   iframeAllow: "camera; microphone",
                   iframeAllowFullscreen: true,
+                  allowFileAccessFromFileURLs: true,
+                  allowUniversalAccessFromFileURLs: true,
                 ),
                 onPermissionRequest: (controller, request) async {
                   return PermissionResponse(
