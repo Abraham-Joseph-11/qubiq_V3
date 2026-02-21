@@ -79,7 +79,7 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
                       ? WebUri(
                           "assets/assets/teachable/pose/index.html#/pose?mode=standalone")
                       : WebUri(
-                          "http://localhost:8088/#/pose?mode=standalone",
+                          "http://localhost:8088/index.html#/pose?mode=standalone",
                         ),
                 ),
                 initialSettings: InAppWebViewSettings(

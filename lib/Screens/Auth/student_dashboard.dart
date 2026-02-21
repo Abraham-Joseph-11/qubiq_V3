@@ -572,7 +572,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
           onTap: () => Navigator.pushNamed(context, '/word')),
       DashboardItem(
           title: 'PowerPoint',
-          subtitle: 'Slides',
+          subtitle: 'Create Slides',
           imagePath: 'assets/images/ppt.png',
           onTap: () => Navigator.pushNamed(context, '/presentation')),
       DashboardItem(
