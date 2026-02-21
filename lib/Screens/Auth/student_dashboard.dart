@@ -7,7 +7,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:camera/camera.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io' show Platform;
 import 'package:process_run/shell.dart';
@@ -28,9 +27,15 @@ import 'package:little_emmi/Screens/ar_dashboard.dart';
 import 'package:little_emmi/Screens/Auth/login_screen.dart';
 import 'package:little_emmi/Screens/GenAI/image_gen_screen.dart';
 import 'package:little_emmi/Screens/GenAI/music_gen_screen.dart';
+import 'package:little_emmi/Screens/qubiqaudio/main.dart' as qubiq_audio;
 import 'package:little_emmi/Screens/Help/help_chat_screen.dart';
 import 'package:little_emmi/Screens/adaptive_quiz_demo.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+// Teachable Machine Local Screens
+import 'package:little_emmi/Screens/teachable/teachable_image_screen.dart';
+import 'package:little_emmi/Screens/teachable/teachable_audio_screen.dart';
+import 'package:little_emmi/Screens/teachable/teachable_pose_screen.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -416,8 +421,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
           onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => const InAppWebViewScreen(
-                      url: 'https://suno.com', title: 'Qubiq Music')))),
+                  builder: (context) => const qubiq_audio.WebViewScreen()))),
       DashboardItem(
           title: 'Neural Chat',
           subtitle: 'QubiQAI Assistant',
@@ -443,15 +447,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
     final List<DashboardItem> teachableApps = [
       DashboardItem(
           title: 'Image Model',
-          subtitle: 'Vision Training',
+          subtitle: 'Object Recognition',
           imagePath: 'assets/images/imgnobgnew.png',
           onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => const InAppWebViewScreen(
-                      url:
-                          'https://teachablemachine.withgoogle.com/train/image',
-                      title: 'Train Image Model')))),
+                  builder: (context) => const TeachableImageScreen()))),
       DashboardItem(
           title: 'Audio Model',
           subtitle: 'Sound Training',
@@ -459,10 +460,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
           onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => const InAppWebViewScreen(
-                      url:
-                          'https://teachablemachine.withgoogle.com/train/audio',
-                      title: 'Train Audio Model')))),
+                  builder: (context) => const TeachableAudioScreen()))),
       DashboardItem(
           title: 'Pose Model',
           subtitle: 'Body Tracking',
@@ -470,9 +468,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
           onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => const InAppWebViewScreen(
-                      url: 'https://teachablemachine.withgoogle.com/train/pose',
-                      title: 'Train Pose Model')))),
+                  builder: (context) => const TeachablePoseScreen()))),
     ];
 
     final List<DashboardItem> roboticsApps = [
@@ -504,8 +500,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
           title: 'App Development',
           subtitle: 'MIT Blocks',
           imagePath: 'assets/images/mitnobg.png',
-          onTap: () =>
-              Navigator.pushNamed(context, '/mit/mobile_inventor')),
+          onTap: () => Navigator.pushNamed(context, '/mit/mobile_inventor')),
     ];
 
     final List<DashboardItem> codingApps = [

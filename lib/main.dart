@@ -29,10 +29,12 @@ import 'package:little_emmi/Screens/Auth/teacher_dashboard.dart';
 import 'package:little_emmi/Screens/Dashboard/admin_dashboard.dart';
 import 'package:little_emmi/Screens/MIT/mit_dashboard_screen.dart';
 import 'package:little_emmi/Screens/MIT/mit_login_screen.dart';
-import 'package:little_emmi/Screens/MIT/mobile_inventor_screen.dart'; 
-import 'package:little_emmi/screens/antipython/webview_screen.dart';
+import 'package:little_emmi/Screens/MIT/mobile_inventor_screen.dart';
+import 'package:little_emmi/screens/antipython/webview_screen.dart'
+    as antipython;
 import 'package:little_emmi/screens/pyblock/webview_screen.dart';
-import 'package:little_emmi/Screens/presentation_webview_screen.dart';
+import 'package:little_emmi/Screens/powerpoint_webview/webview_screen.dart'
+    as powerpoint;
 import 'package:little_emmi/Screens/excel_webview_screen.dart';
 import 'package:little_emmi/Screens/word_webview_screen.dart';
 
@@ -71,9 +73,9 @@ class QubiQApp extends StatelessWidget {
           '/mit/login': (_) => const MitLoginScreen(),
           '/mit/dashboard': (_) => const MitDashboardScreen(),
           '/mit/mobile_inventor': (_) => const MobileInventorScreen(),
-          '/app/antipython': (_) => const WebViewScreen(),
+          '/app/antipython': (_) => const antipython.WebViewScreen(),
           '/app/pyblock': (_) => const PyBlocksWebview(),
-          '/presentation': (_) => const PresentationWebViewScreen(),
+          '/presentation': (_) => const powerpoint.PresentationWebViewScreen(),
           '/excel': (_) => const ExcelWebViewScreen(),
           '/word': (_) => const WordWebViewScreen(),
           '/app/robot_workspace': (_) => const Scaffold(
@@ -112,7 +114,7 @@ class _RobotLaunchScreenState extends State<RobotLaunchScreen> {
   Future<void> _initializeApp() async {
     // Start backend keep-alive pinger
     KeepAliveService().start();
-    
+
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );

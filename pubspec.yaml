@@ -84,6 +84,8 @@ dependencies:
 
   highlight: any
   camera_macos: ^0.0.9
+  shelf: ^1.4.1
+  shelf_static: ^1.1.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -130,6 +132,8 @@ flutter:
     - assets/images/chatai.png
     - assets/images/
     - assets/web.zip
+    - assets/qubiq_web/
+    - assets/qubiq_web/assets/
     - assets/www/
     - assets/www/blocks/
     - assets/www/lib/
@@ -140,12 +144,6 @@ flutter:
     - assets/www/vite.svg
     - assets/www/assets/index-JKwT_vHL.css
     - assets/www/assets/index-xPsAilHw.js
-    - assets/web/dist/
-    - assets/web/dist/assets/
-    - assets/web/dist/index.html
-    - assets/web/dist/vite.svg
-    - assets/web/dist/assets/index-DDzBPqJa.css
-    - assets/web/dist/assets/index-BbfzEzEM.js
     - assets/excel_web/dist/
     - assets/excel_web/dist/assets/
     - assets/excel_web/dist/index.html
@@ -153,6 +151,14 @@ flutter:
     - assets/excel_web/dist/assets/index-uY9H4Hhg.css
     - assets/excel_web/dist/assets/index-Ee9A-V15.js
     - assets/word_web/word/
+    - assets/web/dist/
+    - assets/web/dist/assets/
+    - assets/teachable/image/
+    - assets/teachable/image/assets/
+    - assets/teachable/audio/
+    - assets/teachable/audio/assets/
+    - assets/teachable/pose/
+    - assets/teachable/pose/assets/
 
   #   - images/a_dot_ham.jpeg
 
