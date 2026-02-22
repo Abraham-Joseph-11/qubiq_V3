@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
@@ -39,7 +40,7 @@ class WebViewScreen extends StatefulWidget {
 }
 
 class _WebViewScreenState extends State<WebViewScreen> {
-  late final WebViewController controller;
+  InAppWebViewController? webViewController;
   HttpServer? _server;
   String? _localUrl;
   bool _isLoading = true;
@@ -58,6 +59,13 @@ class _WebViewScreenState extends State<WebViewScreen> {
   }
 
   Future<void> _startLocalServer() async {
+    if (kIsWeb) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
     try {
       print("Starting asset extraction for QubiQ Audio...");
       if (mounted) setState(() => _statusMessage = "Extracting assets...");
@@ -71,7 +79,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
           await webRoot.delete(recursive: true);
         } catch (e) {
           print("Warning: Could not delete old assets: $e");
-          // Continue anyway, maybe we can overwrite
         }
       }
       await webRoot.create(recursive: true);
@@ -144,21 +151,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
       print('Server running on $_localUrl');
 
-      // Initialize WebView
-      controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onPageStarted: (String url) => print('Page started: $url'),
-            onPageFinished: (String url) => print('Page finished: $url'),
-            onWebResourceError: (error) {
-              print(
-                  'Web Error: ${error.description} (Code: ${error.errorCode})');
-            },
-          ),
-        )
-        ..loadRequest(Uri.parse(_localUrl ?? ""));
-
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -194,7 +186,37 @@ class _WebViewScreenState extends State<WebViewScreen> {
               )
             : Stack(
                 children: [
-                  WebViewWidget(controller: controller),
+                  InAppWebView(
+                    initialUrlRequest: URLRequest(
+                      url: kIsWeb
+                          ? WebUri("assets/assets/qubiq_web/qubiq_audio.html")
+                          : WebUri(_localUrl ?? ""),
+                    ),
+                    initialSettings: InAppWebViewSettings(
+                      isInspectable: kDebugMode,
+                      javaScriptEnabled: true,
+                      domStorageEnabled: true,
+                      hardwareAcceleration: true,
+                      mediaPlaybackRequiresUserGesture: false,
+                      allowsInlineMediaPlayback: true,
+                      iframeAllow: "camera; microphone",
+                      iframeAllowFullscreen: true,
+                    ),
+                    onWebViewCreated: (controller) {
+                      webViewController = controller;
+                    },
+                    onPermissionRequest: (controller, request) async {
+                      return PermissionResponse(
+                        resources: request.resources,
+                        action: PermissionResponseAction.GRANT,
+                      );
+                    },
+                    onConsoleMessage: (controller, consoleMessage) {
+                      if (kDebugMode) {
+                        print("QUBIQ AUDIO CONSOLE: ${consoleMessage.message}");
+                      }
+                    },
+                  ),
                   Positioned(
                     top: 10,
                     left: 10,

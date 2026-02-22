@@ -10,8 +10,6 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_static/shelf_static.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'dart:ui_web' as ui_web;
-import 'package:web/web.dart' as web;
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 class TeachablePoseScreen extends StatefulWidget {
@@ -36,20 +34,6 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
 
   Future<void> _startLocalServer() async {
     if (kIsWeb) {
-      // 🌐 REGISTER IFRAME FOR WEB
-      ui_web.platformViewRegistry.registerViewFactory(
-        'teachable-pose-frame',
-        (int viewId) {
-          final iframe = web.HTMLIFrameElement()
-            ..src =
-                'assets/assets/teachable/pose/index.html#/pose?mode=standalone'
-            ..style.border = 'none'
-            ..style.width = '100%'
-            ..style.height = '100%'
-            ..allow = 'camera; microphone; display-capture; autoplay;';
-          return iframe;
-        },
-      );
       setState(() {
         isServerRunning = true;
       });

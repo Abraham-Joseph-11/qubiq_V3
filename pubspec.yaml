@@ -132,7 +132,109 @@ flutter:
     - assets/mobilenet_feature.tflite
     - assets/images/chatai.png
     - assets/images/
-    - assets/web.zip
+    - assets/antipython_web/
+    - assets/antipython_web/lib/
+    - assets/antipython_web/lib/skulpt/
+    - assets/antipython_web/lib/monaco/
+    - assets/antipython_web/lib/monaco/vs/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/postiats/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/scheme/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/sb/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/mdx/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/pascal/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/cameligo/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/razor/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/powerquery/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/apex/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/go/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/systemverilog/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/sparql/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/azcli/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/python/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/css/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/clojure/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/less/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/elixir/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/redis/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/lexon/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/dockerfile/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/dart/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/shell/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/markdown/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/scss/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/sophia/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/perl/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/typescript/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/rust/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/pug/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/fsharp/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/r/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/freemarker2/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/liquid/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/java/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/html/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/abap/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/kotlin/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/cypher/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/php/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/lua/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/xml/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/pascaligo/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/solidity/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/st/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/redshift/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/vb/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/powershell/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/mips/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/pla/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/tcl/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/ini/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/handlebars/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/scala/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/hcl/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/cpp/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/swift/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/graphql/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/qsharp/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/mysql/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/coffee/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/csp/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/pgsql/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/m3/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/yaml/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/csharp/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/julia/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/bat/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/javascript/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/bicep/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/twig/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/msdax/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/wgsl/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/restructuredtext/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/objective-c/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/protobuf/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/ecl/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/ruby/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/flow9/
+    - assets/antipython_web/lib/monaco/vs/basic-languages/sql/
+    - assets/antipython_web/lib/monaco/vs/language/
+    - assets/antipython_web/lib/monaco/vs/language/css/
+    - assets/antipython_web/lib/monaco/vs/language/typescript/
+    - assets/antipython_web/lib/monaco/vs/language/html/
+    - assets/antipython_web/lib/monaco/vs/language/json/
+    - assets/antipython_web/lib/monaco/vs/base/
+    - assets/antipython_web/lib/monaco/vs/base/browser/
+    - assets/antipython_web/lib/monaco/vs/base/browser/ui/
+    - assets/antipython_web/lib/monaco/vs/base/browser/ui/codicons/
+    - assets/antipython_web/lib/monaco/vs/base/browser/ui/codicons/codicon/
+    - assets/antipython_web/lib/monaco/vs/base/common/
+    - assets/antipython_web/lib/monaco/vs/base/common/worker/
+    - assets/antipython_web/lib/monaco/vs/base/worker/
+    - assets/antipython_web/lib/monaco/vs/editor/
+    - assets/antipython_web/lib/lucide/
+    - assets/antipython_web/lib/fonts/
+    - assets/antipython_web/assets/
     - assets/qubiq_web/
     - assets/qubiq_web/assets/
     - assets/www/
@@ -149,8 +251,7 @@ flutter:
     - assets/excel_web/dist/assets/
     - assets/excel_web/dist/index.html
     - assets/excel_web/dist/vite.svg
-    - assets/excel_web/dist/assets/index-uY9H4Hhg.css
-    - assets/excel_web/dist/assets/index-Ee9A-V15.js
+    - assets/excel_web/dist/assets/
     - assets/word_web/word/
     - assets/web/dist/
     - assets/web/dist/assets/
