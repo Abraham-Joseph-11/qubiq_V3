@@ -9,7 +9,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io';
-import 'package:process_run/shell.dart';
 
 // Import your screens
 import 'package:little_emmi/Screens/inappwebview_screen.dart';
@@ -39,8 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       String mainAppPath = Platform.resolvedExecutable;
       String appDirectory = p.dirname(mainAppPath);
       const String appToLaunch = 'EmmiV2.exe';
-      var shell = Shell(workingDirectory: appDirectory);
-      await shell.run(appToLaunch);
+      await Process.start(appToLaunch, [], workingDirectory: appDirectory);
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));

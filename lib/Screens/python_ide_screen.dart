@@ -6,7 +6,6 @@ import 'package:flutter/services.dart'; // Needed for MethodChannel
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:process_run/shell.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:highlight/languages/python.dart';
@@ -78,13 +77,12 @@ class _PythonIdeScreenState extends State<PythonIdeScreen> {
           resultOutput =
               "Error: Bundled Python executable not found.\nExpected at: $pythonExePath\n\n(On macOS, ensure the runtime is in Contents/Resources)";
         } else {
-          var shell = Shell();
-          var result = await shell.run('"$pythonExePath" "${scriptFile.path}"');
+          var result = await Process.run(pythonExePath, [scriptFile.path]);
 
-          if (result.first.stdout.isNotEmpty) {
-            resultOutput = result.first.stdout;
-          } else if (result.first.stderr.isNotEmpty) {
-            resultOutput = "Error:\n${result.first.stderr}";
+          if (result.stdout.toString().isNotEmpty) {
+            resultOutput = result.stdout.toString();
+          } else if (result.stderr.toString().isNotEmpty) {
+            resultOutput = "Error:\n${result.stderr}";
           } else {
             resultOutput = "Script finished with no output.";
           }

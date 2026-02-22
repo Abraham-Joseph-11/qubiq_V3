@@ -17,7 +17,6 @@ import 'package:little_emmi/Utils/responsive_layout.dart';
 
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:process_run/shell.dart';
 import 'package:path/path.dart' as p;
 
 class FlowchartIdeScreen extends StatelessWidget {
@@ -174,10 +173,9 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
           return "Error: Python executable not found at $pythonExePath";
         }
 
-        var shell = Shell();
-        var result = await shell.run('"$pythonExePath" "${scriptFile.path}"');
-        return result.first.stdout.isNotEmpty
-            ? result.first.stdout
+        var result = await Process.run(pythonExePath, [scriptFile.path]);
+        return result.stdout.toString().isNotEmpty
+            ? result.stdout.toString()
             : "Finished.";
       }
     } catch (e) {

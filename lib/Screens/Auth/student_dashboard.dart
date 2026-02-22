@@ -9,8 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:path/path.dart' as p;
-import 'dart:io' show Platform;
-import 'package:process_run/shell.dart';
+import 'dart:io' show Platform, Process;
 // import 'package:provider/provider.dart';
 // import 'package:little_emmi/Providers/api_key_provider.dart'; // REMOVED
 
@@ -127,8 +126,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
     if (kIsWeb) return;
     try {
       String appDirectory = p.dirname(Platform.resolvedExecutable);
-      var shell = Shell(workingDirectory: appDirectory);
-      await shell.run('EmmiV2.exe');
+      await Process.start('EmmiV2.exe', [], workingDirectory: appDirectory);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

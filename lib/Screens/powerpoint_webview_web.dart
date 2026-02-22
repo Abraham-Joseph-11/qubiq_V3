@@ -22,7 +22,7 @@ class _PowerPointWebViewPlatformComponentState
         InAppWebView(
           key: webViewKey,
           initialUrlRequest: URLRequest(
-            url: WebUri("assets/assets/web/dist/index.html"),
+            url: WebUri("assets/assets/web/dist/index.html?v=2"),
           ),
           initialSettings: InAppWebViewSettings(
             isInspectable: true,
