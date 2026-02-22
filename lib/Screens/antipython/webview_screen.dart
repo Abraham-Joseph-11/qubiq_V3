@@ -122,9 +122,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
       final indexFile = File("${webDir.path}/index.html");
       if (await indexFile.exists()) {
         _log("✅ index.html found at ${indexFile.path}");
-        
+
         if (!kIsWeb) {
-           await _startLocalServer(webDir);
+          await _startLocalServer(webDir);
         }
 
         if (!mounted) return;
@@ -158,51 +158,58 @@ class _WebViewScreenState extends State<WebViewScreen> {
   Future<void> _startLocalServer(Directory webDir) async {
     try {
       // Close any existing server first
-      await _server?.close(force: true);
-      
       _server = await HttpServer.bind(InternetAddress.loopbackIPv4, 8084);
-      _log("Localhost server running on http://localhost:8084");
-      
-      _server!.listen((HttpRequest request) async {
+      _log("Localhost server running on http://127.0.0.1:8084");
+
+      final server = _server;
+      if (server == null) return;
+      server.listen((HttpRequest request) async {
         try {
-          final path = request.uri.path == '/' ? '/index.html' : request.uri.path;
+          final path =
+              request.uri.path == '/' ? '/index.html' : request.uri.path;
           final file = File('${webDir.path}$path');
-          
+
           if (await file.exists()) {
             // Set content type
             if (path.endsWith(".html")) {
               request.response.headers.contentType = ContentType.html;
             } else if (path.endsWith(".js")) {
-              request.response.headers.contentType = ContentType("application", "javascript");
+              request.response.headers.contentType =
+                  ContentType("application", "javascript");
             } else if (path.endsWith(".css")) {
               request.response.headers.contentType = ContentType("text", "css");
             } else if (path.endsWith(".svg")) {
-              request.response.headers.contentType = ContentType("image", "svg+xml");
+              request.response.headers.contentType =
+                  ContentType("image", "svg+xml");
             } else if (path.endsWith(".png")) {
-              request.response.headers.contentType = ContentType("image", "png");
+              request.response.headers.contentType =
+                  ContentType("image", "png");
             } else if (path.endsWith(".json")) {
               request.response.headers.contentType = ContentType.json;
             }
 
-            // Disable caching during dev/debug
-            request.response.headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+            // Safe access to _server
+            final server = _server;
+            if (server == null) return;
+            request.response.headers
+                .add("Cache-Control", "no-cache, no-store, must-revalidate");
             request.response.headers.add("Access-Control-Allow-Origin", "*");
-            
+
             await file.openRead().pipe(request.response);
           } else {
             request.response.statusCode = HttpStatus.notFound;
             await request.response.close();
           }
-        } catch (e) {
-          print("Server Error handling request: $e");
+        } catch (e, st) {
+          print("Server Error handling request: $e\n$st");
           try {
             request.response.statusCode = HttpStatus.internalServerError;
             await request.response.close();
           } catch (_) {}
         }
       });
-    } catch (e) {
-      _log("Server Start Error: $e");
+    } catch (e, st) {
+      _log("Server Start Error: $e\n$st");
     }
   }
 
@@ -224,14 +231,25 @@ class _WebViewScreenState extends State<WebViewScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text("Loading Python Environment..."),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  _loadingText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _loadingText.startsWith("Error")
+                        ? Colors.red
+                        : Colors.black,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -247,7 +265,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
             child: InAppWebView(
               key: webViewKey,
               initialUrlRequest: URLRequest(
-                url: WebUri("http://localhost:8084/index.html"),
+                url: WebUri("http://127.0.0.1:8084/index.html"),
               ),
               initialSettings: settings,
               onWebViewCreated: (controller) {

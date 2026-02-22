@@ -76,7 +76,7 @@ class _WordWebViewScreenState extends State<WordWebViewScreen> {
                     url: WebUri(
                       kIsWeb
                           ? "assets/word_web/word/index.html"
-                          : "http://localhost:8085/index.html",
+                          : "http://127.0.0.1:8085/index.html",
                     ),
                   ),
                   initialSettings: InAppWebViewSettings(
@@ -100,8 +100,7 @@ class _WordWebViewScreenState extends State<WordWebViewScreen> {
                     debugPrint("Word JS: ${consoleMessage.message}");
                   },
                 ),
-                if (progress < 1.0)
-                  LinearProgressIndicator(value: progress),
+                if (progress < 1.0) LinearProgressIndicator(value: progress),
               ],
             ),
     );

@@ -1151,11 +1151,15 @@ class _ImageAppCard extends StatelessWidget {
                                   child: Icon(item.icon,
                                       size: 40,
                                       color: item.iconColor ?? Colors.blue))
-                              : Image.asset(item.imagePath!,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.broken_image_rounded,
-                                          size: 30, color: Colors.grey)))),
+                              : (item.imagePath != null
+                                  ? Image.asset(item.imagePath!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error,
+                                              stackTrace) =>
+                                          const Icon(Icons.broken_image_rounded,
+                                              size: 30, color: Colors.grey))
+                                  : const Icon(Icons.broken_image_rounded,
+                                      size: 30, color: Colors.grey)))),
                   const SizedBox(height: 8),
                   Text(item.title,
                       textAlign: TextAlign.center,

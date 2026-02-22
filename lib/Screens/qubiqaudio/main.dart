@@ -168,7 +168,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
       print("Error starting server: $e");
       print(stack);
       if (mounted) {
-        setState(() => _statusMessage = "Error: $e");
+        setState(() => _statusMessage = "Error: $e\n\nStack: $stack");
       }
     }
   }

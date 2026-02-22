@@ -77,7 +77,7 @@ class _PresentationWebViewScreenState extends State<PresentationWebViewScreen> {
                     url: WebUri(
                       kIsWeb
                           ? "assets/assets/web/dist/index.html"
-                          : "http://localhost:8083/index.html",
+                          : "http://127.0.0.1:8083/index.html",
                     ),
                   ),
                   initialSettings: InAppWebViewSettings(

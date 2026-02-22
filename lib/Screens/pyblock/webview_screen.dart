@@ -178,7 +178,7 @@ class _PyBlocksWebviewState extends State<PyBlocksWebview> {
               initialUrlRequest: URLRequest(
                 url: kIsWeb
                     ? WebUri("assets/assets/www/index.html") // Web path
-                    : WebUri("http://localhost:8080/index.html"), // Native path
+                    : WebUri("http://127.0.0.1:8080/index.html"), // Native path
               ),
               initialSettings: InAppWebViewSettings(
                 isInspectable: kDebugMode,

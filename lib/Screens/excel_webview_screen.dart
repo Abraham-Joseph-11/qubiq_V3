@@ -76,7 +76,7 @@ class _ExcelWebViewScreenState extends State<ExcelWebViewScreen> {
                     url: WebUri(
                       kIsWeb
                           ? "assets/assets/excel_web/dist/index.html"
-                          : "http://localhost:8082/index.html",
+                          : "http://127.0.0.1:8082/index.html",
                     ),
                   ),
                   initialSettings: InAppWebViewSettings(
@@ -100,8 +100,7 @@ class _ExcelWebViewScreenState extends State<ExcelWebViewScreen> {
                     debugPrint("Excel JS: ${consoleMessage.message}");
                   },
                 ),
-                if (progress < 1.0)
-                  LinearProgressIndicator(value: progress),
+                if (progress < 1.0) LinearProgressIndicator(value: progress),
               ],
             ),
     );

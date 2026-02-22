@@ -88,11 +88,12 @@ class _TeachableAudioScreenState extends State<TeachableAudioScreen> {
           isServerRunning = true;
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
       print("Error starting Teachable Audio server: $e");
+      print(stack);
       if (mounted) {
         setState(() {
-          _statusMessage = "Error: $e";
+          _statusMessage = "Error: $e\n\nStack: $stack";
         });
       }
     }
@@ -122,7 +123,25 @@ class _TeachableAudioScreenState extends State<TeachableAudioScreen> {
         ),
       ),
       body: !isServerRunning
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  if (_statusMessage != null) ...[
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        _statusMessage!,
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            )
           : SafeArea(
               child: InAppWebView(
                 initialUrlRequest: URLRequest(
