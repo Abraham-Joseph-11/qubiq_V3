@@ -1,10 +1,13 @@
-import 'dart:io'; // For Platform check
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // IMPORT YOUR LOGIN SCREEN
 import 'package:little_emmi/Screens/Auth/login_screen.dart';
@@ -141,6 +144,9 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
     String deviceId = '';
 
     try {
+      if (kIsWeb) {
+        return 'web-id';
+      }
       if (Platform.isWindows) {
         // Reads from Windows Registry (MachineGuid) - Very stable for labs
         WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
@@ -233,7 +239,9 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
         'status': 'active',
         'linkedDeviceId': deviceId, // Lock happens here
         'activatedAt': FieldValue.serverTimestamp(),
-        'platform': Platform.operatingSystem, // Useful for your admin panel
+        'platform': kIsWeb
+            ? 'web'
+            : Platform.operatingSystem, // Useful for your admin panel
       });
 
       // 5. SUCCESS

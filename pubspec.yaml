@@ -86,6 +86,7 @@ dependencies:
   camera_macos: ^0.0.9
   shelf: ^1.4.1
   shelf_static: ^1.1.2
+  pointer_interceptor: ^0.10.1+2
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,6 +1,7 @@
 // lib/Screens/flowchart_ide_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart'; // Needed for MethodChannel
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
@@ -39,7 +40,8 @@ class _FlowchartIdeView extends StatefulWidget {
 }
 
 class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
   final _codeController = CodeController(
     language: python,
     text: "# Your flowchart code will appear here...",
@@ -58,14 +60,16 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
 
   void _zoom(double factor) {
     setState(() {
-      _transformationController.value = _transformationController.value.clone()..scale(factor);
+      _transformationController.value = _transformationController.value.clone()
+        ..scale(factor);
     });
   }
 
   void _generateAndRunCode() async {
     if (context.read<FlowchartProvider>().currentAnimation != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Wait for the current execution to finish.')),
+        const SnackBar(
+            content: Text('Wait for the current execution to finish.')),
       );
       return;
     }
@@ -98,7 +102,9 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
 
   Future<bool> _gatherAllInputs() async {
     final provider = context.read<FlowchartProvider>();
-    final inputBlocks = provider.blocks.where((b) => b.type == FlowchartBlockType.input).toList();
+    final inputBlocks = provider.blocks
+        .where((b) => b.type == FlowchartBlockType.input)
+        .toList();
     for (final block in inputBlocks) {
       final textController = TextEditingController();
       final result = await showDialog<String>(
@@ -113,8 +119,12 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-            TextButton(onPressed: () => Navigator.pop(context, textController.text), child: const Text("OK")),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel")),
+            TextButton(
+                onPressed: () => Navigator.pop(context, textController.text),
+                child: const Text("OK")),
           ],
         ),
       );
@@ -126,10 +136,14 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
 
   Future<String> _runPythonScript(String code) async {
     try {
+      if (kIsWeb) {
+        return "Python execution is not supported on Web. Use the Desktop or Android versions for full functionality.";
+      }
       if (Platform.isAndroid) {
         // --- Android Execution (via MethodChannel) ---
         try {
-          final String result = await platformChannel.invokeMethod('runPython', {
+          final String result =
+              await platformChannel.invokeMethod('runPython', {
             'code': code,
           });
           return result;
@@ -146,8 +160,7 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
               p.dirname(p.dirname(Platform.resolvedExecutable)),
               'Resources',
               'python_runtime',
-              'python'
-          );
+              'python');
         } else {
           // Windows
           pythonExePath = p.join(appDirectory, 'python_runtime', 'python.exe');
@@ -163,7 +176,9 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
 
         var shell = Shell();
         var result = await shell.run('"$pythonExePath" "${scriptFile.path}"');
-        return result.first.stdout.isNotEmpty ? result.first.stdout : "Finished.";
+        return result.first.stdout.isNotEmpty
+            ? result.first.stdout
+            : "Finished.";
       }
     } catch (e) {
       return "Failed: $e";
@@ -201,13 +216,16 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("TERMINAL", style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+              const Text("TERMINAL",
+                  style: TextStyle(
+                      color: Colors.greenAccent, fontWeight: FontWeight.bold)),
               const Divider(color: Colors.white10),
               Expanded(
                 child: SingleChildScrollView(
                   child: SelectableText(
                     _terminalOutput,
-                    style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 12),
+                    style: GoogleFonts.robotoMono(
+                        color: Colors.white, fontSize: 12),
                   ),
                 ),
               ),
@@ -224,7 +242,8 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
       backgroundColor: Colors.grey[900],
       appBar: AppBar(
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text("Flowchart IDE", style: TextStyle(color: Colors.white)),
+        title:
+            const Text("Flowchart IDE", style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.grey[900],
         elevation: 0,
         actions: [
@@ -245,7 +264,8 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
               ExpansionTile(
                 collapsedBackgroundColor: Colors.grey[850],
                 backgroundColor: Colors.grey[850],
-                title: const Text("Blocks", style: TextStyle(color: Colors.white)),
+                title:
+                    const Text("Blocks", style: TextStyle(color: Colors.white)),
                 children: [
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -258,11 +278,12 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
                   ),
                 ],
               ),
-
               Container(
                 height: 500,
                 width: double.infinity,
-                decoration: const BoxDecoration(border: Border.symmetric(horizontal: BorderSide(color: Colors.white10))),
+                decoration: const BoxDecoration(
+                    border: Border.symmetric(
+                        horizontal: BorderSide(color: Colors.white10))),
                 child: Stack(
                   children: [
                     InteractiveViewer(
@@ -299,14 +320,16 @@ class _FlowchartIdeViewState extends State<_FlowchartIdeView> {
                   ],
                 ),
               ),
-
               _buildCodeAndTerminal(isMobile: true),
             ],
           ),
         ),
         desktopBody: Row(
           children: [
-            Container(width: 200, color: Colors.grey[850], child: const FlowchartPalette()),
+            Container(
+                width: 200,
+                color: Colors.grey[850],
+                child: const FlowchartPalette()),
             const Expanded(flex: 3, child: FlowchartCanvas()),
             SizedBox(width: 350, child: _buildCodeAndTerminal(isMobile: false)),
           ],

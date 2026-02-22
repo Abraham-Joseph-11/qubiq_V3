@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 // IMPORT YOUR LOGIN SCREEN
 import 'package:little_emmi/Screens/Auth/login_screen.dart';
@@ -38,6 +39,9 @@ class _ActivationScreenState extends State<ActivationScreen> {
   Future<String> _getDeviceId() async {
     var deviceInfo = DeviceInfoPlugin();
     try {
+      if (kIsWeb) {
+        return 'web-id';
+      }
       if (Platform.isWindows) {
         var windowsInfo = await deviceInfo.windowsInfo;
         return windowsInfo.deviceId;

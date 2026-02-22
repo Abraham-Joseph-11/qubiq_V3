@@ -52,14 +52,15 @@ class _QubiQWebViewState extends State<QubiQWebView> {
     if (kIsWeb) {
       // ON WEB: Resolve relative path using current origin
       final String origin = Uri.base.origin;
-      controller.loadRequest(Uri.parse('$origin/assets/assets/www/index_MIT.html'));
+      controller
+          .loadRequest(Uri.parse('$origin/assets/assets/www/index_MIT.html'));
     } else {
       // ON NATIVE (Mobile/Desktop)
       controller.setJavaScriptMode(JavaScriptMode.unrestricted);
 
       // setBackgroundColor is strictly Mobile-only for now
       // as macOS/Windows implementations may throw UnimplementedError
-      if (Platform.isAndroid || Platform.isIOS) {
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
         controller.setBackgroundColor(const Color(0x00000000));
       }
 

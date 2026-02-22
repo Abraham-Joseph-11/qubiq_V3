@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:process_run/shell.dart';
@@ -19,7 +20,6 @@ import 'package:little_emmi/Screens/Auth/login_screen.dart';
 
 // --- DATA MODEL ---
 
-
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -29,7 +29,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _launchEmmiV2App() async {
-    if (!Platform.isWindows) {
+    if (kIsWeb || !Platform.isWindows) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Windows only feature.')),
       );
@@ -134,8 +134,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         subtitle: 'Build apps with blocks',
                         icon: Icons.extension_outlined,
                         accentColor: Colors.green,
-                        onTap: () =>
-                            Navigator.pushNamed(context, '/mit/mobile_inventor')),
+                        onTap: () => Navigator.pushNamed(
+                            context, '/mit/mobile_inventor')),
                     DashboardItem(
                         title: 'Emmi Core',
                         subtitle: 'Service Management',
@@ -147,7 +147,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         subtitle: 'Web Sandbox',
                         icon: Icons.security,
                         accentColor: Colors.redAccent,
-                        onTap: () => Navigator.pushNamed(context, '/app/antipython')),
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/app/antipython')),
                     DashboardItem(
                         title: 'Emmi Vibe',
                         subtitle: 'Cloud Interface',
@@ -157,7 +158,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => const InAppWebViewScreen(
-                                    url: 'https://staging.d1atsf4l0agpui.amplifyapp.com/',
+                                    url:
+                                        'https://staging.d1atsf4l0agpui.amplifyapp.com/',
                                     title: 'Emmi Vibe')))),
                     DashboardItem(
                         title: 'Flowchart Coder',
@@ -322,9 +324,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _MenuOption('Microsoft Excel', Colors.green[700]!,
           'https://www.microsoft365.com/launch/excel',
           icon: Icons.table_chart_outlined),
-      _MenuOption(
-          'Microsoft PowerPoint',
-          Colors.orange[800]!,
+      _MenuOption('Microsoft PowerPoint', Colors.orange[800]!,
           'https://www.microsoft365.com/launch/powerpoint',
           icon: Icons.slideshow_outlined),
     ]);
@@ -386,7 +386,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     borderRadius: BorderRadius.circular(10)),
                                 child: opt.imagePath != null
                                     ? Image.asset(opt.imagePath!,
-                                        width: 24, height: 24, fit: BoxFit.contain)
+                                        width: 24,
+                                        height: 24,
+                                        fit: BoxFit.contain)
                                     : Icon(opt.icon, color: opt.color)),
 // ...
                             title: Text(opt.title,
@@ -395,24 +397,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     color: Colors.blueGrey[800])),
                             trailing: Icon(Icons.arrow_forward_ios,
                                 size: 14, color: Colors.grey[400]),
-                              onTap: () {
-                                Navigator.pop(context);
-                                if (opt.title == 'Microsoft PowerPoint') {
-                                  Navigator.pushNamed(context, '/presentation');
-                                } else if (opt.title == 'Microsoft Excel') {
-                                  Navigator.pushNamed(context, '/excel');
-                                } else if (opt.title == 'Microsoft Word') {
-                                  Navigator.pushNamed(context, '/word');
-                                } else {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              InAppWebViewScreen(
-                                                  url: opt.url,
-                                                  title: opt.title)));
-                                }
-                              }))
+                            onTap: () {
+                              Navigator.pop(context);
+                              if (opt.title == 'Microsoft PowerPoint') {
+                                Navigator.pushNamed(context, '/presentation');
+                              } else if (opt.title == 'Microsoft Excel') {
+                                Navigator.pushNamed(context, '/excel');
+                              } else if (opt.title == 'Microsoft Word') {
+                                Navigator.pushNamed(context, '/word');
+                              } else {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            InAppWebViewScreen(
+                                                url: opt.url,
+                                                title: opt.title)));
+                              }
+                            }))
                         .toList())),
           ],
         ),

@@ -10,6 +10,9 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_static/shelf_static.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'dart:ui_web' as ui_web;
+import 'package:web/web.dart' as web;
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 class TeachablePoseScreen extends StatefulWidget {
   const TeachablePoseScreen({super.key});
@@ -33,6 +36,20 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
 
   Future<void> _startLocalServer() async {
     if (kIsWeb) {
+      // 🌐 REGISTER IFRAME FOR WEB
+      ui_web.platformViewRegistry.registerViewFactory(
+        'teachable-pose-frame',
+        (int viewId) {
+          final iframe = web.HTMLIFrameElement()
+            ..src =
+                'assets/assets/teachable/pose/index.html#/pose?mode=standalone'
+            ..style.border = 'none'
+            ..style.width = '100%'
+            ..style.height = '100%'
+            ..allow = 'camera; microphone; display-capture; autoplay;';
+          return iframe;
+        },
+      );
       setState(() {
         isServerRunning = true;
       });
@@ -100,10 +117,12 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
   }
 
   Future<void> _requestPermissions() async {
-    if (kIsWeb || Platform.isMacOS || Platform.isWindows) {
-      return;
+    if (!kIsWeb) {
+      if (Platform.isMacOS || Platform.isWindows) {
+        return;
+      }
+      await [Permission.camera, Permission.microphone].request();
     }
-    await [Permission.camera, Permission.microphone].request();
   }
 
   @override
@@ -117,9 +136,11 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Train Pose Model'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: PointerInterceptor(
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
         ),
       ),
       body: !isServerRunning
@@ -147,7 +168,7 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
                 initialUrlRequest: URLRequest(
                   url: kIsWeb
                       ? WebUri(
-                          "assets/assets/teachable/pose/index.html#/pose?mode=standalone")
+                          "assets/assets/teachable/pose/teachable.html#/pose?mode=standalone")
                       : WebUri(
                           "$_localUrl/#/pose?mode=standalone",
                         ),

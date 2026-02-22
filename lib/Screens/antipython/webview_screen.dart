@@ -50,11 +50,12 @@ class _WebViewScreenState extends State<WebViewScreen> {
   Future<void> _initApp() async {
     // Web Verification Guard
     try {
-      if (Platform.isAndroid ||
-          Platform.isIOS ||
-          Platform.isMacOS ||
-          Platform.isWindows ||
-          Platform.isLinux) {
+      if (!kIsWeb &&
+          (Platform.isAndroid ||
+              Platform.isIOS ||
+              Platform.isMacOS ||
+              Platform.isWindows ||
+              Platform.isLinux)) {
         _log("Platform: ${Platform.operatingSystem}");
       }
     } catch (e) {

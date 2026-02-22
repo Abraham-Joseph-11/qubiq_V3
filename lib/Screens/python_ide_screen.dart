@@ -1,6 +1,7 @@
 // lib/Screens/python_ide_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart'; // Needed for MethodChannel
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
@@ -37,35 +38,35 @@ class _PythonIdeScreenState extends State<PythonIdeScreen> {
       _output = "Running script...";
     });
 
+    String resultOutput;
     try {
-      if (Platform.isAndroid) {
+      if (kIsWeb) {
+        resultOutput =
+            "Python execution is not supported on Web. Use the Desktop or Android versions for full functionality.";
+      } else if (Platform.isAndroid) {
         // --- Android Execution (via Chaquopy/MethodChannel) ---
         try {
-          final String result = await platformChannel.invokeMethod('runPython', {
+          final String result =
+              await platformChannel.invokeMethod('runPython', {
             'code': controller.text,
           });
-          _output = result;
+          resultOutput = result;
         } on PlatformException catch (e) {
-          _output = "Failed to run on Android: '${e.message}'.\nEnsure Chaquopy is configured in your MainActivity.";
+          resultOutput =
+              "Failed to run on Android: '${e.message}'.\nEnsure Chaquopy is configured in your MainActivity.";
         }
-
       } else {
         // --- Desktop Execution (Windows/macOS) ---
         String appDirectory = p.dirname(Platform.resolvedExecutable);
         String pythonExePath;
 
         if (Platform.isMacOS) {
-          // On macOS, the executable is inside Contents/MacOS.
-          // We generally bundle resources in Contents/Resources.
-          // Path: .../App.app/Contents/MacOS/../Resources/python_runtime/python
           pythonExePath = p.join(
               p.dirname(p.dirname(Platform.resolvedExecutable)),
               'Resources',
               'python_runtime',
-              'python' // No .exe extension on Mac
-          );
+              'python');
         } else {
-          // Windows: Relative to the .exe
           pythonExePath = p.join(appDirectory, 'python_runtime', 'python.exe');
         }
 
@@ -74,26 +75,27 @@ class _PythonIdeScreenState extends State<PythonIdeScreen> {
         await scriptFile.writeAsString(controller.text);
 
         if (!await File(pythonExePath).exists()) {
-          _output = "Error: Bundled Python executable not found.\nExpected at: $pythonExePath\n\n(On macOS, ensure the runtime is in Contents/Resources)";
+          resultOutput =
+              "Error: Bundled Python executable not found.\nExpected at: $pythonExePath\n\n(On macOS, ensure the runtime is in Contents/Resources)";
         } else {
           var shell = Shell();
-          // Escape spaces in paths for safety
           var result = await shell.run('"$pythonExePath" "${scriptFile.path}"');
 
           if (result.first.stdout.isNotEmpty) {
-            _output = result.first.stdout;
+            resultOutput = result.first.stdout;
           } else if (result.first.stderr.isNotEmpty) {
-            _output = "Error:\n${result.first.stderr}";
+            resultOutput = "Error:\n${result.first.stderr}";
           } else {
-            _output = "Script finished with no output.";
+            resultOutput = "Script finished with no output.";
           }
         }
       }
     } catch (e) {
-      _output = "Failed to run script.\nError: $e";
+      resultOutput = "Failed to run script.\nError: $e";
     }
 
     setState(() {
+      _output = resultOutput;
       _isLoading = false;
     });
   }
@@ -137,7 +139,8 @@ class _PythonIdeScreenState extends State<PythonIdeScreen> {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
-                      width: MediaQuery.of(context).size.width > 600 ? 1000 : 800,
+                      width:
+                          MediaQuery.of(context).size.width > 600 ? 1000 : 800,
                       child: CodeField(
                         controller: controller,
                         textStyle: GoogleFonts.robotoMono(fontSize: 12),
