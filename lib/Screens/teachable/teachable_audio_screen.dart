@@ -1,8 +1,15 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shelf/shelf.dart';
+import 'package:shelf/shelf_io.dart' as shelf_io;
+import 'package:shelf_static/shelf_static.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class TeachableAudioScreen extends StatefulWidget {
   const TeachableAudioScreen({super.key});
@@ -12,8 +19,10 @@ class TeachableAudioScreen extends StatefulWidget {
 }
 
 class _TeachableAudioScreenState extends State<TeachableAudioScreen> {
-  InAppLocalhostServer? localhostServer;
+  HttpServer? _server;
+  String? _localUrl;
   bool isServerRunning = false;
+  String? _statusMessage;
 
   @override
   void initState() {
@@ -30,20 +39,62 @@ class _TeachableAudioScreenState extends State<TeachableAudioScreen> {
       return;
     }
 
-    // Using port 8087 for Teachable Audio to avoid conflicts
-    localhostServer = InAppLocalhostServer(
-      documentRoot: 'assets/teachable/audio',
-      port: 8087,
-    );
-
     try {
-      await localhostServer?.start();
-      setState(() {
-        isServerRunning = true;
-      });
-      debugPrint("Teachable Audio Localhost server started on port 8087");
+      print("Starting asset extraction for Teachable Audio...");
+
+      final docsDir = await getApplicationDocumentsDirectory();
+      final webRoot = Directory(p.join(docsDir.path, 'teachable_audio_web'));
+
+      if (!await webRoot.exists()) {
+        await webRoot.create(recursive: true);
+      }
+
+      // Read AssetManifest safely
+      String manifestContent =
+          await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+      final webAssets = manifestMap.keys
+          .where((key) => key.startsWith('assets/teachable/audio/'))
+          .toList();
+
+      for (final assetPath in webAssets) {
+        final data = await rootBundle.load(assetPath);
+        final bytes = data.buffer.asUint8List();
+
+        final relativePath =
+            assetPath.replaceFirst('assets/teachable/audio/', '');
+        final file = File(p.join(webRoot.path, relativePath));
+
+        await file.parent.create(recursive: true);
+        await file.writeAsBytes(bytes);
+      }
+
+      print('Extracted ${webAssets.length} files to ${webRoot.path}');
+
+      final handler = const Pipeline().addMiddleware(logRequests()).addHandler(
+            createStaticHandler(
+              webRoot.path,
+              defaultDocument: 'teachable.html',
+            ),
+          );
+
+      _server = await shelf_io.serve(handler, InternetAddress.loopbackIPv4, 0);
+
+      if (_server != null) {
+        _localUrl = 'http://127.0.0.1:${_server!.port}';
+        print('Teachable Audio server running on $_localUrl');
+        setState(() {
+          isServerRunning = true;
+        });
+      }
     } catch (e) {
-      debugPrint("Error starting localhost server: $e");
+      print("Error starting Teachable Audio server: $e");
+      if (mounted) {
+        setState(() {
+          _statusMessage = "Error: $e";
+        });
+      }
     }
   }
 
@@ -56,7 +107,7 @@ class _TeachableAudioScreenState extends State<TeachableAudioScreen> {
 
   @override
   void dispose() {
-    localhostServer?.close();
+    _server?.close(force: true);
     super.dispose();
   }
 
@@ -79,7 +130,7 @@ class _TeachableAudioScreenState extends State<TeachableAudioScreen> {
                       ? WebUri(
                           "assets/assets/teachable/audio/teachable.html#/audio?mode=standalone")
                       : WebUri(
-                          "http://localhost:8087/teachable.html#/audio?mode=standalone",
+                          "$_localUrl/#/audio?mode=standalone",
                         ),
                 ),
                 initialSettings: InAppWebViewSettings(

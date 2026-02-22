@@ -1,8 +1,15 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shelf/shelf.dart';
+import 'package:shelf/shelf_io.dart' as shelf_io;
+import 'package:shelf_static/shelf_static.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class TeachablePoseScreen extends StatefulWidget {
   const TeachablePoseScreen({super.key});
@@ -12,8 +19,10 @@ class TeachablePoseScreen extends StatefulWidget {
 }
 
 class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
-  InAppLocalhostServer? localhostServer;
+  HttpServer? _server;
+  String? _localUrl;
   bool isServerRunning = false;
+  String? _statusMessage;
 
   @override
   void initState() {
@@ -30,20 +39,62 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
       return;
     }
 
-    // Using port 8088 for Teachable Pose to avoid conflicts
-    localhostServer = InAppLocalhostServer(
-      documentRoot: 'assets/teachable/pose',
-      port: 8088,
-    );
-
     try {
-      await localhostServer?.start();
-      setState(() {
-        isServerRunning = true;
-      });
-      debugPrint("Teachable Pose Localhost server started on port 8088");
+      print("Starting asset extraction for Teachable Pose...");
+
+      final docsDir = await getApplicationDocumentsDirectory();
+      final webRoot = Directory(p.join(docsDir.path, 'teachable_pose_web'));
+
+      if (!await webRoot.exists()) {
+        await webRoot.create(recursive: true);
+      }
+
+      // Read AssetManifest safely
+      String manifestContent =
+          await rootBundle.loadString('AssetManifest.json');
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+      final webAssets = manifestMap.keys
+          .where((key) => key.startsWith('assets/teachable/pose/'))
+          .toList();
+
+      for (final assetPath in webAssets) {
+        final data = await rootBundle.load(assetPath);
+        final bytes = data.buffer.asUint8List();
+
+        final relativePath =
+            assetPath.replaceFirst('assets/teachable/pose/', '');
+        final file = File(p.join(webRoot.path, relativePath));
+
+        await file.parent.create(recursive: true);
+        await file.writeAsBytes(bytes);
+      }
+
+      print('Extracted ${webAssets.length} files to ${webRoot.path}');
+
+      final handler = const Pipeline().addMiddleware(logRequests()).addHandler(
+            createStaticHandler(
+              webRoot.path,
+              defaultDocument: 'index.html',
+            ),
+          );
+
+      _server = await shelf_io.serve(handler, InternetAddress.loopbackIPv4, 0);
+
+      if (_server != null) {
+        _localUrl = 'http://127.0.0.1:${_server!.port}';
+        print('Teachable Pose server running on $_localUrl');
+        setState(() {
+          isServerRunning = true;
+        });
+      }
     } catch (e) {
-      debugPrint("Error starting localhost server: $e");
+      print("Error starting Teachable Pose server: $e");
+      if (mounted) {
+        setState(() {
+          _statusMessage = "Error: $e";
+        });
+      }
     }
   }
 
@@ -56,7 +107,7 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
 
   @override
   void dispose() {
-    localhostServer?.close();
+    _server?.close(force: true);
     super.dispose();
   }
 
@@ -79,7 +130,7 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
                       ? WebUri(
                           "assets/assets/teachable/pose/index.html#/pose?mode=standalone")
                       : WebUri(
-                          "http://localhost:8088/index.html#/pose?mode=standalone",
+                          "$_localUrl/#/pose?mode=standalone",
                         ),
                 ),
                 initialSettings: InAppWebViewSettings(

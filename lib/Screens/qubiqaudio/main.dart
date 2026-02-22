@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shelf/shelf.dart';
@@ -58,31 +59,47 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   Future<void> _startLocalServer() async {
     try {
-      setState(() => _statusMessage = "Extracting assets...");
+      print("Starting asset extraction for QubiQ Audio...");
+      if (mounted) setState(() => _statusMessage = "Extracting assets...");
+
       final docsDir = await getApplicationDocumentsDirectory();
       final webRoot = Directory(p.join(docsDir.path, 'qubiq_web'));
 
       // Always re-extract in debug mode or if missing
       if (await webRoot.exists()) {
-        await webRoot.delete(recursive: true);
+        try {
+          await webRoot.delete(recursive: true);
+        } catch (e) {
+          print("Warning: Could not delete old assets: $e");
+          // Continue anyway, maybe we can overwrite
+        }
       }
       await webRoot.create(recursive: true);
 
-      // Read AssetManifest to find files
-      final manifestContent = await DefaultAssetBundle.of(
-        context,
-      ).loadString('AssetManifest.json');
+      // Read AssetManifest safely
+      print("Loading AssetManifest...");
+      String manifestContent;
+      try {
+        manifestContent = await rootBundle.loadString('AssetManifest.json');
+      } catch (e) {
+        print("Error loading AssetManifest.json: $e");
+        throw "Could not find AssetManifest.json. Please rebuild the app.";
+      }
+
       final Map<String, dynamic> manifestMap = json.decode(manifestContent);
 
       final webAssets = manifestMap.keys
           .where((key) => key.startsWith('assets/qubiq_web/'))
           .toList();
 
+      if (webAssets.isEmpty) {
+        print("Warning: No assets found in assets/qubiq_web/");
+      }
+
       for (final assetPath in webAssets) {
-        final data = await DefaultAssetBundle.of(context).load(assetPath);
+        final data = await rootBundle.load(assetPath);
         final bytes = data.buffer.asUint8List();
 
-        // Relativize path: assets/qubiq_web/foo.js -> foo.js
         final relativePath = assetPath.replaceFirst('assets/qubiq_web/', '');
         final file = File(p.join(webRoot.path, relativePath));
 
@@ -91,22 +108,14 @@ class _WebViewScreenState extends State<WebViewScreen> {
       }
 
       print('Extracted ${webAssets.length} files to ${webRoot.path}');
-      webRoot
-          .listSync(recursive: true)
-          .forEach((f) => print('File: ${f.path}'));
 
-      setState(() => _statusMessage = "Starting server...");
+      if (mounted) setState(() => _statusMessage = "Starting server...");
 
       // Configure Server with COOP/COEP headers
       final handler = const Pipeline()
           .addMiddleware(
             (innerHandler) => (request) async {
-              print('Request: ${request.method} ${request.url}');
               final response = await innerHandler(request);
-              print('Response: ${response.statusCode} for ${request.url}');
-              print(
-                'Headers: COOP=${response.headers['Cross-Origin-Opener-Policy']} Type=${response.headers['content-type']}',
-              );
               return response.change(
                 headers: {
                   'Cross-Origin-Opener-Policy': 'same-origin',
@@ -123,8 +132,15 @@ class _WebViewScreenState extends State<WebViewScreen> {
             ),
           );
 
+      // Explicitly use 127.0.0.1 for Windows
       _server = await shelf_io.serve(handler, InternetAddress.loopbackIPv4, 0);
-      _localUrl = 'http://localhost:${_server!.port}';
+
+      final server = _server;
+      if (server == null) {
+        throw "HttpServer could not be started.";
+      }
+
+      _localUrl = 'http://127.0.0.1:${server.port}';
 
       print('Server running on $_localUrl');
 
@@ -136,21 +152,24 @@ class _WebViewScreenState extends State<WebViewScreen> {
             onPageStarted: (String url) => print('Page started: $url'),
             onPageFinished: (String url) => print('Page finished: $url'),
             onWebResourceError: (error) {
-              print('Web Error: ${error.description}');
-              print('Error Code: ${error.errorCode}');
-              print('Error Type: ${error.errorType}');
+              print(
+                  'Web Error: ${error.description} (Code: ${error.errorCode})');
             },
           ),
         )
-        ..loadRequest(Uri.parse(_localUrl!));
+        ..loadRequest(Uri.parse(_localUrl ?? ""));
 
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     } catch (e, stack) {
       print("Error starting server: $e");
       print(stack);
-      setState(() => _statusMessage = "Error: $e");
+      if (mounted) {
+        setState(() => _statusMessage = "Error: $e");
+      }
     }
   }
 
