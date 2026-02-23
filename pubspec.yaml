@@ -128,6 +128,7 @@ flutter:
     - ./lib/Resources/loopIcons/Repeat.svg
     - ./lib/Resources/loopIcons/repeatsvg.svg
     - assets/images/qubiq_logo.png
+    - assets/pythonide/
     - assets/curriculum.json
     - assets/mobilenet_feature.tflite
     - assets/images/chatai.png

@@ -37,6 +37,7 @@ import 'package:little_emmi/Screens/powerpoint_webview/webview_screen.dart'
     as powerpoint;
 import 'package:little_emmi/Screens/excel_webview_screen.dart';
 import 'package:little_emmi/Screens/word_webview_screen.dart';
+import 'package:little_emmi/Screens/unknown_route_screen.dart';
 
 import 'package:little_emmi/Services/keep_alive_service.dart';
 
@@ -88,6 +89,11 @@ class QubiQApp extends StatelessWidget {
                   ),
                 ),
               ),
+        },
+        onUnknownRoute: (settings) {
+          return MaterialPageRoute(
+            builder: (context) => const UnknownRouteScreen(),
+          );
         },
       ),
     );

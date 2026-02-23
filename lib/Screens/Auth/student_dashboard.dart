@@ -397,64 +397,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 800;
 
-    final List<DashboardItem> quizApps = [
-      DashboardItem(
-          title: 'Maths',
-          subtitle: 'Level 1-3',
-          icon: Icons.calculate,
-          iconColor: Colors.orange,
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      const AdaptiveQuizScreen(subject: "Maths")))),
-      DashboardItem(
-          title: 'Python',
-          subtitle: 'Coding Basics',
-          icon: Icons.code,
-          iconColor: Colors.blue,
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      const AdaptiveQuizScreen(subject: "Python")))),
-      DashboardItem(
-          title: 'Science',
-          subtitle: 'Nature & Physics',
-          icon: Icons.science,
-          iconColor: Colors.green,
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      const AdaptiveQuizScreen(subject: "Science")))),
-      DashboardItem(
-          title: 'English',
-          subtitle: 'Grammar & Vocab',
-          icon: Icons.menu_book,
-          iconColor: Colors.pink,
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      const AdaptiveQuizScreen(subject: "English")))),
-      DashboardItem(
-          title: 'Social Science',
-          subtitle: 'History & Civics',
-          icon: Icons.public,
-          iconColor: Colors.teal,
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      const AdaptiveQuizScreen(subject: "Social Science")))),
-    ];
-
-    final List<DashboardItem> aiLearningApps = [
+    // 1. Generative AI
+    final List<DashboardItem> generativeAIApps = [
       DashboardItem(
           title: 'Qubiq Music',
-          subtitle: 'Music Creation',
-          imagePath: 'assets/images/qubiq_music.png', // Updated logo path
+          subtitle: 'Music Generation',
+          imagePath: 'assets/images/qubiq_music.png',
           onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -463,145 +411,24 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
           title: 'Neural Chat',
           subtitle: 'QubiQAI Assistant',
           imagePath: 'assets/images/chatai.png',
-          onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const AiChatScreen()));
-          }),
-      DashboardItem(
-          title: 'Vision Forge',
-          subtitle: 'AI Image Gen',
-          imagePath: 'assets/images/imagegen.png',
           onTap: () => Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const ImageGenScreen()))),
+              MaterialPageRoute(builder: (context) => const AiChatScreen()))),
       DashboardItem(
           title: 'Sonic Lab',
-          subtitle: 'AI Sound FX',
+          subtitle: 'Sound Effect Generator',
           imagePath: 'assets/images/soundgen.png',
           onTap: () => Navigator.push(context,
               MaterialPageRoute(builder: (context) => const MusicGenScreen()))),
+      DashboardItem(
+          title: 'Vision Forge',
+          subtitle: 'Image Generation',
+          imagePath: 'assets/images/imagegen.png',
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const ImageGenScreen()))),
     ];
 
-    final List<DashboardItem> teachableApps = [
-      DashboardItem(
-          title: 'Image Model',
-          subtitle: 'Object Recognition',
-          imagePath: 'assets/images/imgnobgnew.png',
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const TeachableImageScreen()))),
-      DashboardItem(
-          title: 'Audio Model',
-          subtitle: 'Sound Training',
-          imagePath: 'assets/images/soundmachinenobg.png',
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const TeachableAudioScreen()))),
-      DashboardItem(
-          title: 'Pose Model',
-          subtitle: 'Body Tracking',
-          imagePath: 'assets/images/posemodelnobg.png',
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const TeachablePoseScreen()))),
-    ];
-
-    final List<DashboardItem> roboticsApps = [
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows)
-        DashboardItem(
-            title: 'Emmi Core',
-            subtitle: 'Robot Manager',
-            imagePath: 'assets/images/emmi.png',
-            onTap: _launchEmmiV2App),
-      DashboardItem(
-          title: 'Emmi Vibe',
-          subtitle: 'Web Interface',
-          imagePath: 'assets/images/emmi_vibe.png',
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const InAppWebViewScreen(
-                      url: 'https://staging.d1atsf4l0agpui.amplifyapp.com/',
-                      title: 'Emmi Vibe')))),
-      DashboardItem(
-          title: 'Little Emmi',
-          subtitle: 'Robot Learning',
-          imagePath: 'assets/images/littleemmi.png',
-          onTap: () => Navigator.pushNamed(context, '/app/robot_workspace')),
-    ];
-
-    final List<DashboardItem> mobileApps = [
-      DashboardItem(
-          title: 'App Development',
-          subtitle: 'MIT Blocks',
-          imagePath: 'assets/images/mitnobg.png',
-          onTap: () => Navigator.pushNamed(context, '/mit/mobile_inventor')),
-    ];
-
-    final List<DashboardItem> codingApps = [
-      DashboardItem(
-          title: 'Flowchart Py',
-          subtitle: 'Visual Python',
-          imagePath: 'assets/images/pyflownobg.png',
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const FlowchartIdeScreen()))),
-      DashboardItem(
-          title: 'Flowchart Java',
-          subtitle: 'Visual Java',
-          imagePath: 'assets/images/javaflownobg.png',
-          onTap: () => _showComingSoon(context, "Flowchart Java")),
-      DashboardItem(
-          title: 'Python IDE',
-          subtitle: 'Code Editor',
-          imagePath: 'assets/images/python.jpg',
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const PythonIdeScreen()))),
-      DashboardItem(
-          title: 'PyVibe',
-          subtitle: 'Web Sandbox',
-          icon: Icons.security,
-          iconColor: Colors.redAccent,
-          onTap: () => Navigator.pushNamed(context, '/app/antipython')),
-      DashboardItem(
-          title: 'PyBlock',
-          subtitle: 'Block Python',
-          icon: Icons.extension,
-          iconColor: Colors.purpleAccent,
-          onTap: () =>
-              Navigator.pushNamed(context, '/app/pyblock')), // <-- ADDED
-      DashboardItem(
-          title: 'Java IDE',
-          subtitle: 'Professional',
-          imagePath: 'assets/images/java.jpg',
-          onTap: () => _showComingSoon(context, "Professional Java IDE")),
-    ];
-
-    final List<DashboardItem> arApps = [
-      DashboardItem(
-          title: 'AR Learning',
-          subtitle: '3D Exploration',
-          imagePath: 'assets/images/ar.png',
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => ARDashboard()))),
-      DashboardItem(
-          title: 'Assemblr EDU',
-          subtitle: 'AR Studio',
-          imagePath: 'assets/images/edu.jpg',
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const InAppWebViewScreen(
-                      url: 'https://edu.assemblrworld.com/en/edukits',
-                      title: 'Assemblr EDU')))),
-    ];
-
-    final List<DashboardItem> productivityApps = [
+    // 2. Office Tools
+    final List<DashboardItem> officeToolsApps = [
       DashboardItem(
           title: 'Word',
           subtitle: 'Documents',
@@ -619,26 +446,243 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
           onTap: () => Navigator.pushNamed(context, '/excel')),
     ];
 
+    // 3. AI Powered Office Tools
+    final List<DashboardItem> aiOfficeToolsApps = [
+      DashboardItem(
+          title: 'AI Word',
+          subtitle: 'Coming Soon',
+          imagePath: 'assets/images/word.png',
+          onTap: () => _showComingSoon(context, "AI Powered Word")),
+      DashboardItem(
+          title: 'AI PowerPoint',
+          subtitle: 'Coming Soon',
+          imagePath: 'assets/images/ppt.png',
+          onTap: () => _showComingSoon(context, "AI Powered PowerPoint")),
+      DashboardItem(
+          title: 'AI Excel',
+          subtitle: 'Coming Soon',
+          imagePath: 'assets/images/excel.png',
+          onTap: () => _showComingSoon(context, "AI Powered Excel")),
+    ];
+
+    // 4. Python
+    final List<DashboardItem> pythonApps = [
+      DashboardItem(
+          title: 'Python IDE',
+          subtitle: 'Code Editor',
+          imagePath: 'assets/images/python.jpg',
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const PythonIdeScreen()))),
+      DashboardItem(
+          title: 'Block Python',
+          subtitle: 'Visual Python',
+          icon: Icons.extension,
+          iconColor: Colors.purpleAccent,
+          onTap: () => Navigator.pushNamed(context, '/app/pyblock')),
+      DashboardItem(
+          title: 'Vibe Python',
+          subtitle: 'Web Sandbox',
+          icon: Icons.security,
+          iconColor: Colors.redAccent,
+          onTap: () => Navigator.pushNamed(context, '/app/antipython')),
+    ];
+
+    // 5. Java
+    final List<DashboardItem> javaApps = [
+      DashboardItem(
+          title: 'Java IDE',
+          subtitle: 'Coming Soon',
+          imagePath: 'assets/images/java.jpg',
+          onTap: () => _showComingSoon(context, "Professional Java IDE")),
+      DashboardItem(
+          title: 'Block Java',
+          subtitle: 'Visual Java',
+          imagePath: 'assets/images/javaflownobg.png',
+          onTap: () => _showComingSoon(context, "Flowchart Java")),
+      DashboardItem(
+          title: 'Vibe Java',
+          subtitle: 'Coming Soon',
+          imagePath: 'assets/images/java.jpg',
+          onTap: () => _showComingSoon(context, "Vibe Java Sandbox")),
+    ];
+
+    // 6. Robotics Tools
+    final List<DashboardItem> roboticsApps = [
+      DashboardItem(
+          title: 'Emmi Lite',
+          subtitle: 'Coming Soon',
+          imagePath: 'assets/images/emmi.png',
+          onTap: () => _showComingSoon(context, "Emmi Lite Controller")),
+      DashboardItem(
+          title: 'Emmi Vibe Coding',
+          subtitle: 'Web Interface',
+          imagePath: 'assets/images/emmi_vibe.png',
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const InAppWebViewScreen(
+                      url: 'https://staging.d1atsf4l0agpui.amplifyapp.com/',
+                      title: 'Emmi Vibe')))),
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows)
+        DashboardItem(
+            title: 'Emmi Core',
+            subtitle: 'Robot Manager',
+            imagePath: 'assets/images/emmi.png',
+            onTap: _launchEmmiV2App)
+      else
+        DashboardItem(
+            title: 'Emmi Core',
+            subtitle: 'Windows Only',
+            imagePath: 'assets/images/emmi.png',
+            onTap: () =>
+                _showComingSoon(context, "Emmi Core (Windows Desktop Only)")),
+      DashboardItem(
+          title: 'Little Emmi',
+          subtitle: 'Robot Learning',
+          imagePath: 'assets/images/littleemmi.png',
+          onTap: () => Navigator.pushNamed(context, '/app/robot_workspace')),
+      DashboardItem(
+          title: 'Drone Tuning',
+          subtitle: 'Upcoming',
+          icon: Icons.flight_takeoff,
+          iconColor: Colors.lightGreen,
+          onTap: () => _showComingSoon(context, "Drone Tuning")),
+    ];
+
+    // 7. AI Training Tools
+    final List<DashboardItem> aiTrainingApps = [
+      DashboardItem(
+          title: 'Image Recognition',
+          subtitle: 'Object Training',
+          imagePath: 'assets/images/imgnobgnew.png',
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const TeachableImageScreen()))),
+      DashboardItem(
+          title: 'Voice Recognition',
+          subtitle: 'Sound Training',
+          imagePath: 'assets/images/soundmachinenobg.png',
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const TeachableAudioScreen()))),
+      DashboardItem(
+          title: 'Pose Training',
+          subtitle: 'Body Tracking',
+          imagePath: 'assets/images/posemodelnobg.png',
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const TeachablePoseScreen()))),
+    ];
+
+    // 8. Mobile App Development
+    final List<DashboardItem> mobileApps = [
+      DashboardItem(
+          title: 'Qubiq Studio',
+          subtitle: 'MIT Blocks',
+          imagePath: 'assets/images/mitnobg.png',
+          onTap: () => Navigator.pushNamed(context, '/mit/mobile_inventor')),
+    ];
+
+    // 9. Adaptive Learning
+    final List<DashboardItem> adaptiveApps = [
+      DashboardItem(
+          title: 'English',
+          subtitle: 'Grammar & Vocab',
+          icon: Icons.menu_book,
+          iconColor: Colors.pink,
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      const AdaptiveQuizScreen(subject: "English")))),
+      DashboardItem(
+          title: "Math's", // Spelled "Math's" explicitly per user request
+          subtitle: 'Level 1-3',
+          icon: Icons.calculate,
+          iconColor: Colors.orange,
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      const AdaptiveQuizScreen(subject: "Maths")))),
+      DashboardItem(
+          title: 'IT',
+          subtitle: 'Tech & Computers',
+          icon: Icons.computer,
+          iconColor: Colors.grey,
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      const AdaptiveQuizScreen(subject: "IT")))),
+      DashboardItem(
+          title: 'Social Science',
+          subtitle: 'History & Civics',
+          icon: Icons.public,
+          iconColor: Colors.teal,
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      const AdaptiveQuizScreen(subject: "Social Science")))),
+      DashboardItem(
+          title: 'Science',
+          subtitle: 'Nature & Physics',
+          icon: Icons.science,
+          iconColor: Colors.green,
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      const AdaptiveQuizScreen(subject: "Science")))),
+    ];
+
+    // 10. AR Tools
+    final List<DashboardItem> arApps = [
+      DashboardItem(
+          title: 'AR Studio',
+          subtitle: '3D Exploration',
+          imagePath: 'assets/images/ar.png',
+          onTap: () => Navigator.push(
+              context, MaterialPageRoute(builder: (context) => ARDashboard()))),
+    ];
+
     final List<_CategoryTile> categories = [
       _CategoryTile(
-          name: "AI Learning", color: Colors.blue, items: aiLearningApps),
+          name: "1. Generative AI",
+          color: Colors.blue,
+          items: generativeAIApps),
       _CategoryTile(
-          name: "Teachable Machine",
-          color: Colors.orange,
-          items: teachableApps),
-      _CategoryTile(name: "Robotics", color: Colors.teal, items: roboticsApps),
-      _CategoryTile(name: "Coding", color: Colors.amber, items: codingApps),
-      _CategoryTile(
-          name: "Augmented Reality", color: Colors.pinkAccent, items: arApps),
-      _CategoryTile(
-          name: "Productivity Studio",
+          name: "2. Office Tools",
           color: Colors.indigo,
-          items: productivityApps),
+          items: officeToolsApps),
       _CategoryTile(
-          name: "Adaptive Learning",
+          name: "3. AI Powered Office Tools",
+          color: Colors.cyan,
+          items: aiOfficeToolsApps),
+      _CategoryTile(name: "4. Python", color: Colors.amber, items: pythonApps),
+      _CategoryTile(name: "5. Java", color: Colors.deepOrange, items: javaApps),
+      _CategoryTile(
+          name: "6. Robotics Tools", color: Colors.teal, items: roboticsApps),
+      _CategoryTile(
+          name: "7. AI Training Tools",
+          color: Colors.orange,
+          items: aiTrainingApps),
+      _CategoryTile(
+          name: "8. Mobile App Development",
+          color: Colors.green,
+          items: mobileApps),
+      _CategoryTile(
+          name: "9. Adaptive Learning",
           color: Colors.deepPurpleAccent,
-          items: quizApps),
-      _CategoryTile(name: "Mobile App", color: Colors.green, items: mobileApps),
+          items: adaptiveApps),
+      _CategoryTile(
+          name: "10. AR Tools", color: Colors.pinkAccent, items: arApps),
     ];
 
     return Scaffold(
