@@ -120,8 +120,15 @@ class _RobotLaunchScreenState extends State<RobotLaunchScreen> {
     );
 
     // ✅ AUTO LOGOUT ONLY ON DESKTOP (Guard against Web crash)
-    if (!kIsWeb && (Platform.isWindows || Platform.isMacOS)) {
-      await FirebaseAuth.instance.signOut();
+    if (!kIsWeb) {
+      bool isDesktop = false;
+      try {
+        isDesktop = Platform.isWindows || Platform.isMacOS;
+      } catch (_) {}
+
+      if (isDesktop) {
+        await FirebaseAuth.instance.signOut();
+      }
     }
 
     /*

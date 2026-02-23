@@ -22,8 +22,8 @@ class _ExcelWebViewPlatformComponentState
         InAppWebView(
           key: webViewKey,
           initialUrlRequest: URLRequest(
-            // On Flutter web, assets are served relative to the base URL under /assets/
-            url: WebUri("assets/assets/excel_web/dist/index.html?v=2"),
+            // On Flutter web, assets in the root web folder can be loaded relatively
+            url: WebUri("excel/index.html?v=3"),
           ),
           initialSettings: InAppWebViewSettings(
             isInspectable: true,

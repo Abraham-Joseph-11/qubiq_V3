@@ -72,9 +72,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!kIsWeb &&
-        (Platform.isWindows || Platform.isMacOS) &&
-        state == AppLifecycleState.detached) {
+    bool isDesktop = false;
+    try {
+      if (!kIsWeb) {
+        isDesktop = Platform.isWindows || Platform.isMacOS;
+      }
+    } catch (_) {}
+
+    if (isDesktop && state == AppLifecycleState.detached) {
       FirebaseAuth.instance.signOut();
     }
   }
@@ -473,7 +478,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
     ];
 
     final List<DashboardItem> roboticsApps = [
-      if (!kIsWeb && Platform.isWindows)
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows)
         DashboardItem(
             title: 'Emmi Core',
             subtitle: 'Robot Manager',

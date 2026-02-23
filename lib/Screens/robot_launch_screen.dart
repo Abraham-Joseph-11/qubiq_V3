@@ -147,19 +147,32 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       if (kIsWeb) {
         return 'web-id';
       }
-      if (Platform.isWindows) {
+
+      bool isWindows = false;
+      bool isMacOS = false;
+      bool isAndroid = false;
+      bool isIOS = false;
+
+      try {
+        isWindows = Platform.isWindows;
+        isMacOS = Platform.isMacOS;
+        isAndroid = Platform.isAndroid;
+        isIOS = Platform.isIOS;
+      } catch (_) {}
+
+      if (isWindows) {
         // Reads from Windows Registry (MachineGuid) - Very stable for labs
         WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
         deviceId = windowsInfo.deviceId;
-      } else if (Platform.isMacOS) {
+      } else if (isMacOS) {
         // Hardware UUID - Tied to the motherboard
         MacOsDeviceInfo macInfo = await deviceInfo.macOsInfo;
         deviceId = macInfo.systemGUID ?? 'mac_unknown';
-      } else if (Platform.isAndroid) {
+      } else if (isAndroid) {
         // Android ID - Persists until Factory Reset
         AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
         deviceId = androidInfo.id;
-      } else if (Platform.isIOS) {
+      } else if (isIOS) {
         // Vendor ID - Good for App Store apps
         IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
         deviceId = iosInfo.identifierForVendor ?? 'ios_unknown';
@@ -235,13 +248,18 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
       }
 
       // 4. ACTIVATE NEW LICENSE (Lock to this Hardware ID)
+      String platformName = 'web';
+      if (!kIsWeb) {
+        try {
+          platformName = Platform.operatingSystem;
+        } catch (_) {}
+      }
+
       await doc.reference.update({
         'status': 'active',
         'linkedDeviceId': deviceId, // Lock happens here
         'activatedAt': FieldValue.serverTimestamp(),
-        'platform': kIsWeb
-            ? 'web'
-            : Platform.operatingSystem, // Useful for your admin panel
+        'platform': platformName, // Useful for your admin panel
       });
 
       // 5. SUCCESS
