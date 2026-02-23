@@ -16,6 +16,7 @@ import 'dart:io' show Platform, Process;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 // APP IMPORTS
 import 'package:little_emmi/Screens/flowchart_ide_screen.dart';
@@ -86,7 +87,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
 
   void _precacheAssets() {
     final List<String> assets = [
-      'assets/images/quiz.png',
       'assets/images/suno.png',
       'assets/images/chatai.png',
       'assets/images/imagegen.png',
@@ -109,6 +109,21 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
 
   Future<void> _verifyRealInternet() async {
     try {
+      if (kIsWeb) {
+        var connectivityResult = await Connectivity().checkConnectivity();
+        bool isConnected =
+            connectivityResult.contains(ConnectivityResult.mobile) ||
+                connectivityResult.contains(ConnectivityResult.wifi) ||
+                connectivityResult.contains(ConnectivityResult.ethernet);
+
+        if (isConnected) {
+          if (_isOffline && mounted) setState(() => _isOffline = false);
+        } else {
+          if (!_isOffline && mounted) setState(() => _isOffline = true);
+        }
+        return;
+      }
+
       final response = await http
           .get(Uri.parse('https://www.google.com'))
           .timeout(const Duration(seconds: 2));
@@ -121,7 +136,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
   }
 
   Future<void> _requestCameraPermission() async {
-    if (kIsWeb || Platform.isWindows) return;
+    if (kIsWeb) return;
+    try {
+      bool isWindows = false;
+      if (!kIsWeb) {
+        try {
+          isWindows = Platform.isWindows;
+        } catch (_) {}
+      }
+      if (isWindows) return;
+    } catch (_) {}
     var status = await Permission.camera.status;
     if (status.isDenied) await Permission.camera.request();
     if (await Permission.camera.isPermanentlyDenied) openAppSettings();
@@ -130,8 +154,15 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
   Future<void> _launchEmmiV2App() async {
     if (kIsWeb) return;
     try {
-      String appDirectory = p.dirname(Platform.resolvedExecutable);
-      await Process.start('EmmiV2.exe', [], workingDirectory: appDirectory);
+      String appDirectory = '';
+      if (!kIsWeb) {
+        try {
+          appDirectory = p.dirname(Platform.resolvedExecutable);
+        } catch (_) {}
+      }
+      if (appDirectory.isNotEmpty) {
+        await Process.start('EmmiV2.exe', [], workingDirectory: appDirectory);
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
