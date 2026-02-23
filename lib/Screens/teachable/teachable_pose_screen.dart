@@ -11,6 +11,7 @@ import 'package:shelf_static/shelf_static.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:pointer_interceptor/pointer_interceptor.dart';
+import 'iframe_registry.dart';
 
 class TeachablePoseScreen extends StatefulWidget {
   const TeachablePoseScreen({super.key});
@@ -30,6 +31,12 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
     super.initState();
     _startLocalServer();
     _requestPermissions();
+    if (kIsWeb) {
+      // Load the HTML without the hash to avoid React Router route matching issues.
+      // The React app will render its default/root view.
+      registerIframe(
+          'pose-web-view', "assets/assets/teachable/pose/teachable.html");
+    }
   }
 
   Future<void> _startLocalServer() async {
@@ -148,40 +155,38 @@ class _TeachablePoseScreenState extends State<TeachablePoseScreen> {
               ),
             )
           : SafeArea(
-              child: InAppWebView(
-                initialUrlRequest: URLRequest(
-                  url: kIsWeb
-                      ? WebUri(
-                          "assets/assets/teachable/pose/teachable.html#/pose?mode=standalone")
-                      : WebUri(
-                          "$_localUrl/#/pose?mode=standalone",
-                        ),
-                ),
-                initialSettings: InAppWebViewSettings(
-                  isInspectable: kDebugMode,
-                  javaScriptEnabled: true,
-                  domStorageEnabled: true,
-                  hardwareAcceleration: true,
-                  safeBrowsingEnabled: false,
-                  mediaPlaybackRequiresUserGesture: false,
-                  allowsInlineMediaPlayback: true,
-                  iframeAllow: "camera; microphone",
-                  iframeAllowFullscreen: true,
-                  allowFileAccessFromFileURLs: true,
-                  allowUniversalAccessFromFileURLs: true,
-                ),
-                onPermissionRequest: (controller, request) async {
-                  return PermissionResponse(
-                    resources: request.resources,
-                    action: PermissionResponseAction.GRANT,
-                  );
-                },
-                onConsoleMessage: (controller, consoleMessage) {
-                  if (kDebugMode) {
-                    print("TEACHABLE POSE CONSOLE: ${consoleMessage.message}");
-                  }
-                },
-              ),
+              child: kIsWeb
+                  ? const HtmlElementView(viewType: 'pose-web-view')
+                  : InAppWebView(
+                      initialUrlRequest: URLRequest(
+                        url: WebUri("$_localUrl/#/pose?mode=standalone"),
+                      ),
+                      initialSettings: InAppWebViewSettings(
+                        isInspectable: kDebugMode,
+                        javaScriptEnabled: true,
+                        domStorageEnabled: true,
+                        hardwareAcceleration: true,
+                        safeBrowsingEnabled: false,
+                        mediaPlaybackRequiresUserGesture: false,
+                        allowsInlineMediaPlayback: true,
+                        iframeAllow: "camera; microphone",
+                        iframeAllowFullscreen: true,
+                        allowFileAccessFromFileURLs: true,
+                        allowUniversalAccessFromFileURLs: true,
+                      ),
+                      onPermissionRequest: (controller, request) async {
+                        return PermissionResponse(
+                          resources: request.resources,
+                          action: PermissionResponseAction.GRANT,
+                        );
+                      },
+                      onConsoleMessage: (controller, consoleMessage) {
+                        if (kDebugMode) {
+                          print(
+                              "TEACHABLE POSE CONSOLE: ${consoleMessage.message}");
+                        }
+                      },
+                    ),
             ),
     );
   }

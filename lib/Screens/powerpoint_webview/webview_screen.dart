@@ -6,7 +6,12 @@ class PresentationWebViewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Scaffold is already provided by PowerPointWebViewCross
-    return const PowerPointWebViewPlatformComponent(); // Connect to the cross-platform widget
+    return Scaffold(
+      backgroundColor: Colors
+          .transparent, // CRITICAL: Must be transparent for Web IFrame to show
+      // Scaffold is already provided by PowerPointWebViewCross
+      body:
+          const PowerPointWebViewPlatformComponent(), // Connect to the cross-platform widget
+    );
   }
 }

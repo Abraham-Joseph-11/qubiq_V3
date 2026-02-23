@@ -6,7 +6,11 @@ class ExcelWebViewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Scaffold is already provided by ExcelWebViewCross
-    return const ExcelWebViewPlatformComponent();
+    return Scaffold(
+      backgroundColor: Colors
+          .transparent, // CRITICAL: Must be transparent for Web IFrame to show
+      // Scaffold is already provided by ExcelWebViewCross
+      body: const ExcelWebViewPlatformComponent(),
+    );
   }
 }
