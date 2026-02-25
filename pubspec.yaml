@@ -129,6 +129,14 @@ flutter:
     - ./lib/Resources/loopIcons/repeatsvg.svg
     - assets/images/qubiq_logo.png
     - assets/pythonide/
+    - assets/emmi_html/
+    - assets/emmi_html/css/
+    - assets/emmi_html/js/
+    - assets/emmi_html/js/generators/
+    - assets/emmi_html/js/tests/
+    - assets/emmi_html/blocks/
+    - assets/emmi_html/media/
+    - assets/emmi_html/headers/
     - assets/curriculum.json
     - assets/mobilenet_feature.tflite
     - assets/images/chatai.png

@@ -26,6 +26,7 @@ import 'package:little_emmi/Screens/MIT/mit_dashboard_screen.dart';
 import 'package:little_emmi/Screens/ai_chat_screen.dart';
 import 'package:little_emmi/Screens/ar_dashboard.dart';
 import 'package:little_emmi/Screens/Auth/login_screen.dart';
+import 'package:little_emmi/Screens/emmi_lite_screen.dart';
 import 'package:little_emmi/Screens/GenAI/image_gen_screen.dart';
 import 'package:little_emmi/Screens/GenAI/music_gen_screen.dart';
 import 'package:little_emmi/Screens/qubiqaudio/main.dart' as qubiq_audio;
@@ -512,9 +513,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
     final List<DashboardItem> roboticsApps = [
       DashboardItem(
           title: 'Emmi Lite',
-          subtitle: 'Coming Soon',
+          subtitle: 'Block-Based Robot Coding',
           imagePath: 'assets/images/emmi.png',
-          onTap: () => _showComingSoon(context, "Emmi Lite Controller")),
+          onTap: () => Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const EmmiLiteScreen()))),
       DashboardItem(
           title: 'Emmi Vibe Coding',
           subtitle: 'Web Interface',

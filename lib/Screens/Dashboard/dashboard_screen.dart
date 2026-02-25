@@ -14,6 +14,7 @@ import 'dart:io';
 import 'package:little_emmi/Screens/inappwebview_screen.dart';
 import 'package:little_emmi/Screens/python_ide_screen.dart';
 import 'package:little_emmi/Screens/flowchart_ide_screen.dart';
+import 'package:little_emmi/Screens/emmi_lite_screen.dart';
 // ✅ ADDED THIS IMPORT
 import 'package:little_emmi/Screens/Auth/login_screen.dart';
 
@@ -127,6 +128,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         accentColor: Colors.teal,
                         onTap: () => Navigator.pushNamed(
                             context, '/app/robot_workspace')),
+                    DashboardItem(
+                        title: 'Emmi Lite',
+                        subtitle: 'Block-Based Robot Coding',
+                        icon: Icons.smart_toy_outlined,
+                        accentColor: Colors.deepPurple,
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const EmmiLiteScreen()))),
                     DashboardItem(
                         title: 'MIT App Inventor',
                         subtitle: 'Build apps with blocks',
