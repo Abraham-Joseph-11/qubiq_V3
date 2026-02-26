@@ -4,14 +4,6 @@
 // EMMI BOT V2 Blocks
 // ===========================================
 
-// Colors matching screenshots/standard
-const EYES_COLOR = "#00838F"; // Teal/Cyan kind of color in screenshot
-const WHEELS_COLOR = "#3F51B5"; // Blue/Indigo
-const BUZZER_COLOR = "#E91E63"; // Pink
-const TOUCH_COLOR = "#3F51B5"; // Blue (same as structure/control in some themes, but screenshot shows blue header)
-const MIC_COLOR = "#000000"; // Black header in screenshot? Actually looks like standard block color
-const LIGHT_COLOR = "#FFA726"; // Orange
-
 // ===========================================
 // Eyes
 // ===========================================
@@ -32,7 +24,7 @@ Blockly.Blocks['emmi_eyes_digital'] = {
             ]), "STATE");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(EYES_COLOR);
+        this.setColour("#00838F");
         this.setTooltip("Control the digital state of the eye LEDs.");
         this.setHelpUrl("");
     }
@@ -49,7 +41,7 @@ Blockly.Blocks['emmi_wheels_init'] = {
             .appendField("wheels");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(WHEELS_COLOR);
+        this.setColour("#3F51B5");
         this.setTooltip("Initialize wheels.");
         this.setHelpUrl("");
     }
@@ -64,8 +56,7 @@ Blockly.Blocks['emmi_wheels_simple'] = {
                 ["forward", "FORWARD"],
                 ["backward", "BACKWARD"],
                 ["left", "LEFT"],
-                ["right", "RIGHT"],
-                ["stop", "STOP"]
+                ["right", "RIGHT"]
             ]), "DIRECTION")
             .appendField("speed")
             .appendField(new Blockly.FieldDropdown([
@@ -77,7 +68,7 @@ Blockly.Blocks['emmi_wheels_simple'] = {
             .appendField(new Blockly.FieldNumber(1), "STEP");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(WHEELS_COLOR);
+        this.setColour("#3F51B5");
         this.setTooltip("Move the robot.");
         this.setHelpUrl("");
     }
@@ -92,15 +83,15 @@ Blockly.Blocks['emmi_buzzer_music'] = {
         this.appendDummyInput()
             .appendField("buzzer")
             .appendField(new Blockly.FieldDropdown([["BUZZER", "PIN_BUZZER"]]), "PIN")
-            .appendField("play ring tone")
+            .appendField("Play RTTTL melody")
             .appendField(new Blockly.FieldDropdown([
                 ['StarWars', 'StarWars'], ['MahnaMahna', 'MahnaMahna'], ['LeisureSuit', 'LeisureSuit'], ['MissionImp', 'MissionImp'], ['Entertainer', 'Entertainer'], ['Muppets', 'Muppets'], ['Flinstones', 'Flinstones'], ['YMCA', 'YMCA'], ['Simpsons', 'Simpsons'], ['Indiana', 'Indiana'], ['TakeOnMe', 'TakeOnMe'], ['Looney', 'Looney'], ['20thCenFox', '_20thCenFox'], ['Bond', 'Bond'], ['GoodBad', 'GoodBad'], ['PinkPanther', 'PinkPanther'], ['A_Team', 'A_Team'], ['Jeopardy', 'Jeopardy'], ['Gadget', 'Gadget'], ['Smurfs', 'Smurfs'], ['Toccata', 'Toccata'], ['Short', 'Short'], ['JingleBell', 'JingleBell'], ['Rudolph', 'Rudolph'], ['WeWishYou', 'WeWishYou'], ['WinterWonderland', 'WinterWonderland'], ['OhDennenboom', 'OhDennenboom'], ['LetItSnow', 'LetItSnow'], ['Frosty', 'Frosty'], ['SilentNight', 'SilentNight'], ['LastChristmas', 'LastChristmas'], ['AllIWant', 'AllIWant'], ['AmazingGrace', 'AmazingGrace']
             ]), "MELODY");
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(BUZZER_COLOR);
-        this.setTooltip("play ring tone");
+        this.setColour("#E91E63");
+        this.setTooltip("Play RTTTL melody");
         this.setHelpUrl('');
     }
 };
@@ -110,14 +101,14 @@ Blockly.Blocks['emmi_buzzer_music_custom'] = {
         this.appendDummyInput()
             .appendField("buzzer")
             .appendField(new Blockly.FieldDropdown([["BUZZER", "PIN_BUZZER"]]), "PIN")
-            .appendField("play ring tone");
+            .appendField("Play custom RTTTL");
         this.appendValueInput("MELODY")
             .setCheck("String");
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(BUZZER_COLOR);
-        this.setTooltip("Play a custom ring tone string.");
+        this.setColour("#E91E63");
+        this.setTooltip("Play a custom RTTTL melody string.");
         this.setHelpUrl('');
     }
 };
@@ -129,15 +120,16 @@ Blockly.Blocks['emmi_buzzer_note'] = {
             .appendField(new Blockly.FieldDropdown([["BUZZER", "PIN_BUZZER"]]), "PIN")
             .appendField("play")
             .appendField(new Blockly.FieldDropdown([
-                ["C₄ | Do₄", "261"], ["D₄ | Re₄", "293"], ["E₄ | Mi₄", "329"], ["F₄ | Fa₄", "349"], ["G₄ | Sol₄", "392"], ["A₄ | La₄", "440"], ["B₄ | Si₄", "493"], ["C₅ | Do₅", "523"], ["D₅ | Re₅", "587"], ["E₅ | Mi₅", "659"], ["F₅ | Fa₅", "698"], ["G₅ | Sol₅", "784"], ["A₅ | La₅", "880"]
+                ["C4", "261"], ["D4", "294"], ["E4", "329"], ["F4", "349"], ["G4", "392"], ["A4", "440"], ["B4", "493"], ["C5", "523"]
             ]), "NOTE")
             .appendField("|")
             .appendField(new Blockly.FieldDropdown([
-                ["\u266B beamed notes", "125"], ["\u266A eight note", "250"], ["\u2669 quarter note", "500"], ["\uD834\uDD5E half note", "1000"], ["\uD834\uDD5D whole otte", "2000"]
-            ]), "TEMPO");
+                ["Do", "Do"], ["Re", "Re"], ["Mi", "Mi"], ["Fa", "Fa"], ["So", "So"], ["La", "La"], ["Ti", "Ti"], ["Do", "Do"]
+            ]), "SOLFA") // Solfege mostly for display or alternative selection
+            .appendField("beamed notes");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(BUZZER_COLOR);
+        this.setColour("#E91E63");
         this.setTooltip("Play a musical note.");
         this.setHelpUrl("");
     }
@@ -158,7 +150,7 @@ Blockly.Blocks['emmi_buzzer_frequency'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(BUZZER_COLOR);
+        this.setColour("#E91E63");
         this.setTooltip("Play a frequency.");
         this.setHelpUrl("");
     }
@@ -171,7 +163,7 @@ Blockly.Blocks['emmi_buzzer_stop'] = {
             .appendField(new Blockly.FieldDropdown([["BUZZER", "PIN_BUZZER"]]), "PIN");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(BUZZER_COLOR);
+        this.setColour("#E91E63");
         this.setTooltip("Stop the buzzer.");
         this.setHelpUrl("");
     }
@@ -184,15 +176,11 @@ Blockly.Blocks['emmi_buzzer_stop'] = {
 Blockly.Blocks['emmi_touch_read'] = {
     init: function () {
         this.appendDummyInput()
-            .appendField("digital state PIN")
+            .appendField("Analog read PIN")
             .appendField(new Blockly.FieldDropdown([["TOUCH", "PIN_TOUCH"]]), "PIN")
-            .appendField(new Blockly.FieldDropdown([
-                ["pull-up", "INPUT_PULLUP"],
-                ["pull-down", "INPUT_PULLDOWN"], // ESP32 supports pulldown on some pins
-                ["input", "INPUT"]
-            ]), "MODE");
+          
         this.setOutput(true, "Number"); // Digital Read returns 0 or 1
-        this.setColour(TOUCH_COLOR);
+        this.setColour("#3F51B5");
         this.setTooltip("Read digital state of touch sensor.");
         this.setHelpUrl("");
     }
@@ -213,7 +201,7 @@ Blockly.Blocks['emmi_mic_read'] = {
                 ["input", "INPUT"]
             ]), "MODE");
         this.setOutput(true, "Number");
-        this.setColour(MIC_COLOR);
+        this.setColour("#000000");
         this.setTooltip("Read digital state of microphone.");
         this.setHelpUrl("");
     }
@@ -229,7 +217,7 @@ Blockly.Blocks['emmi_light_read'] = {
             .appendField("analog read PIN")
             .appendField(new Blockly.FieldDropdown([["LIGHT", "PIN_LIGHT"]]), "PIN");
         this.setOutput(true, "Number");
-        this.setColour(LIGHT_COLOR);
+        this.setColour("#FFA726");
         this.setTooltip("Read analog value from light sensor.");
         this.setHelpUrl("");
     }
@@ -239,139 +227,37 @@ Blockly.Blocks['emmi_light_read'] = {
 // Cute Sounds
 // ===========================================
 
-Blockly.Blocks['emmi_buzzer_cute'] = {
-    init: function () {
-        this.appendDummyInput()
-            .appendField("🎼")
-            .appendField("Play Cute Sound")
-            .appendField(new Blockly.FieldDropdown([
-                ['CONNECTION', 'S_CONNECTION'],
-                ['DISCONNECTION', 'S_DISCONNECTION'],
-                ['BUTTON_PUSHED', 'S_BUTTON_PUSHED'],
-                ['MODE1', 'S_MODE1'],
-                ['MODE2', 'S_MODE2'],
-                ['MODE3', 'S_MODE3'],
-                ['SURPRISE', 'S_SURPRISE'],
-                ['OHOOH', 'S_OHOOH'],
-                ['OHOOH2', 'S_OHOOH2'],
-                ['CUDDLY', 'S_CUDDLY'],
-                ['SLEEPING', 'S_SLEEPING'],
-                ['HAPPY', 'S_HAPPY'],
-                ['SUPER_HAPPY', 'S_SUPER_HAPPY'],
-                ['HAPPY_SHORT', 'S_HAPPY_SHORT'],
-                ['SAD', 'S_SAD'],
-                ['CONFUSED', 'S_CONFUSED'],
-                ['FART1', 'S_FART1'],
-                ['FART2', 'S_FART2'],
-                ['FART3', 'S_FART3']
-            ]), "SOUND");
-        this.setInputsInline(true);
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(BUZZER_COLOR);
-        this.setTooltip("Play a cute sound.");
-        this.setHelpUrl("");
-    }
-};
+
 
 // ===========================================
 // Improved Tone / Play
 // ===========================================
 
-Blockly.Blocks['emmi_buzzer_play_tempo'] = {
-    init: function () {
-        this.appendDummyInput()
-            .appendField("buzzer")
-            .appendField("play note")
-            .appendField(new Blockly.FieldDropdown([
-                ["C₄ | Do₄", "261"], ["D₄ | Re₄", "293"], ["E₄ | Mi₄", "329"], ["F₄ | Fa₄", "349"], ["G₄ | Sol₄", "392"], ["A₄ | La₄", "440"], ["B₄ | Si₄", "493"], ["C₅ | Do₅", "523"], ["D₅ | Re₅", "587"], ["E₅ | Mi₅", "659"], ["F₅ | Fa₅", "698"], ["G₅ | Sol₅", "784"], ["A₅ | La₅", "880"]
-            ]), "NOTE")
-            .appendField("tempo")
-            .appendField(new Blockly.FieldDropdown([
-                ["\u266B beamed notes", "125"], ["\u266A eight note", "250"], ["\u2669 quarter note", "500"], ["\uD834\uDD5E half note", "1000"], ["\uD834\uDD5D whole otte", "2000"]
-            ]), "TEMPO");
-        this.setInputsInline(true);
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(BUZZER_COLOR);
-        this.setTooltip("Play a note with specific duration.");
-        this.setHelpUrl("");
-    }
-};
+
 
 // ===========================================
 // MP3 / DFPlayer Mini
 // ===========================================
-const MP3_COLOR = "#FF63BB"; // Matching user's color or similar
 
-Blockly.Blocks["emmi_mp3_init"] = {
-    init: function () {
-        this.appendDummyInput()
-            .appendField("init MP3 (DFPlayer)")
-            .appendField("RX Pin")
-            .appendField(new Blockly.FieldDropdown([
-                ["16", "16"], ["17", "17"], ["0", "0"], ["4", "4"]
-            ]), "PIN_RX")
-            .appendField("TX Pin")
-            .appendField(new Blockly.FieldDropdown([
-                ["17", "17"], ["16", "16"], ["2", "2"], ["4", "4"]
-            ]), "PIN_TX");
-        this.appendValueInput("Volume")
-            .setCheck("Number")
-            .appendField("Volume (0-30)");
-        this.appendDummyInput()
-            .appendField("Autoplay")
-            .appendField(new Blockly.FieldCheckbox("FALSE"), "PLAY");
-        this.setInputsInline(true);
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(MP3_COLOR);
-        this.setTooltip("Initialize DFPlayer Mini.");
-        this.setHelpUrl("");
-    }
-};
 
-Blockly.Blocks["emmi_mp3_play_track"] = {
-    init: function () {
-        this.appendValueInput("NUM")
-            .setCheck("Number")
-            .appendField("MP3 Play Track #");
-        this.setInputsInline(true);
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(MP3_COLOR);
-        this.setTooltip("Play specific track number.");
-        this.setHelpUrl("");
-    }
-};
 
-Blockly.Blocks["emmi_mp3_commands"] = {
-    init: function () {
-        this.appendDummyInput()
-            .appendField("MP3 Command")
-            .appendField(new Blockly.FieldDropdown([
-                ["Play", "PLAY"],
-                ["Pause", "PAUSE"],
-                ["Next", "NEXT"],
-                ["Previous", "PREVIOUS"]
-            ]), "CMD");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(MP3_COLOR);
-        this.setTooltip("Control MP3 playback.");
-        this.setHelpUrl("");
-    }
-};
 
-Blockly.Blocks["emmi_mp3_volume"] = {
-    init: function () {
-        this.appendValueInput("VOLUME")
-            .setCheck("Number")
-            .appendField("MP3 Set Volume (0-30)");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(MP3_COLOR);
-        this.setTooltip("Set MP3 volume.");
-        this.setHelpUrl("");
-    }
-};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

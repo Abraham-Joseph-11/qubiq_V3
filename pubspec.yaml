@@ -133,10 +133,18 @@ flutter:
     - assets/emmi_html/css/
     - assets/emmi_html/js/
     - assets/emmi_html/js/generators/
+    - assets/emmi_html/js/commands/
     - assets/emmi_html/js/tests/
     - assets/emmi_html/blocks/
     - assets/emmi_html/media/
     - assets/emmi_html/headers/
+    - assets/emmi_html/lib/blockly/
+    - assets/emmi_html/lib/blockly/media/
+    - assets/emmi_html/lib/prism/
+    - assets/emmi_html/lib/prism/themes/
+    - assets/emmi_html/lib/prism/components/
+    - assets/emmi_html/lib/font-awesome/css/
+    - assets/emmi_html/lib/font-awesome/webfonts/
     - assets/curriculum.json
     - assets/mobilenet_feature.tflite
     - assets/images/chatai.png

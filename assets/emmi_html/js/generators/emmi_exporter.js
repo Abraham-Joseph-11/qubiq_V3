@@ -57,6 +57,92 @@
             }
         }
 
+        splitCommandComponent(component) {
+            if (Array.isArray(component)) {
+                return component
+                    .map((part) => String(part || '').trim())
+                    .filter(Boolean);
+            }
+            return String(component || '')
+                .split('|')
+                .map((part) => part.trim())
+                .filter(Boolean);
+        }
+
+        addInitTokensFrom(value) {
+            const tokens = this.splitCommandComponent(value);
+            for (const token of tokens) {
+                this.addInitToken(token);
+            }
+        }
+
+        getCustomCommandRegistry() {
+            const registry = globalScope.emmiCommandGenerator;
+            if (!registry || typeof registry !== 'object') return null;
+            return registry;
+        }
+
+        normalizeCustomStatementResult(result) {
+            if (result == null) return [];
+            if (Array.isArray(result)) return this.splitCommandComponent(result);
+
+            if (typeof result === 'string') {
+                return this.splitCommandComponent(result);
+            }
+
+            if (typeof result === 'object') {
+                this.addInitTokensFrom(result.init || result.initTokens || []);
+                const body = result.mainTokens || result.tokens || result.main || result.loop || result.setup || [];
+                return this.splitCommandComponent(body);
+            }
+
+            return [];
+        }
+
+        resolveCustomStatementTokens(block) {
+            const registry = this.getCustomCommandRegistry();
+            if (!registry || !registry.forBlock || !block || !block.type) {
+                return { matched: false, tokens: [] };
+            }
+
+            const entry = registry.forBlock[block.type];
+            if (entry == null) {
+                return { matched: false, tokens: [] };
+            }
+
+            if (typeof entry === 'function') {
+                const result = entry(block, this);
+                return { matched: true, tokens: this.normalizeCustomStatementResult(result) };
+            }
+
+            return { matched: true, tokens: this.normalizeCustomStatementResult(entry) };
+        }
+
+        resolveCustomValueToken(block) {
+            const registry = this.getCustomCommandRegistry();
+            if (!registry || !registry.forValue || !block || !block.type) {
+                return { matched: false, value: '' };
+            }
+
+            const entry = registry.forValue[block.type];
+            if (entry == null) {
+                return { matched: false, value: '' };
+            }
+
+            let result = entry;
+            if (typeof entry === 'function') {
+                result = entry(block, this);
+            }
+
+            if (result && typeof result === 'object') {
+                this.addInitTokensFrom(result.init || result.initTokens || []);
+                const value = result.valueToken || result.value || result.token || '';
+                return { matched: true, value: String(value || '') };
+            }
+
+            return { matched: true, value: String(result || '') };
+        }
+
         normalizeVarType(typeField) {
             switch (typeField) {
                 case 'int':
@@ -132,62 +218,24 @@
         }
 
         serializeStatementBlock(block) {
+            const custom = this.resolveCustomStatementTokens(block);
+            if (custom.matched) {
+                return custom.tokens;
+            }
+
             switch (block.type) {
                 case 'emmi_eyes_digital':
                     this.addInitToken('E');
                     return [this.mapEyeToken(block)];
-                case 'esp32_digital_write': {
-                    const pin = block.getFieldValue('PIN');
-                    const state = block.getFieldValue('STATE');
-                    if (pin === 'PIN_BUZZER') {
-                        this.addInitToken('B');
-                        return state === 'HIGH' ? ['BF440', 'D500', 'BS'] : ['BS'];
-                    }
-                    if (pin === 'PIN_EYE_RED' || pin === 'PIN_EYE_GREEN' || pin === 'PIN_EYE_BLUE' ||
-                        pin === 'RED' || pin === 'GREEN' || pin === 'BLUE') {
-                        this.addInitToken('E');
-                        return [this.mapEyeToken(block)];
-                    }
-                    if (pin && pin.startsWith('MOTOR')) {
-                        this.addInitToken('M');
-                        return ['MS'];
-                    }
-                    return [];
-                }
                 case 'emmi_wheels_init':
                     this.addInitToken('M');
                     return [];
                 case 'emmi_wheels_simple':
                     this.addInitToken('M');
                     return [this.mapMotorToken(block)];
-                case 'emmi_buzzer_note': {
+                case 'emmi_buzzer_note':
                     this.addInitToken('B');
-                    const freq = block.getFieldValue('NOTE') || '440';
-                    const duration = block.getFieldValue('TEMPO') || '500';
-                    const out = ['BF' + freq];
-                    if (duration) out.push(this.mapDelayValue(duration));
-                    out.push('BS');
-                    return out;
-                }
-                case 'emmi_buzzer_play_tempo': {
-                    this.addInitToken('B');
-                    const freq = block.getFieldValue('NOTE') || '440';
-                    const duration = block.getFieldValue('TEMPO') || '500';
-                    const out = ['BF' + freq];
-                    if (duration) out.push(this.mapDelayValue(duration));
-                    out.push('BS');
-                    return out;
-                }
-                case 'emmi_buzzer_music':
-                    this.addInitToken('B');
-                    return ['BP' + (block.getFieldValue('MELODY') || 'StarWars')];
-                case 'emmi_buzzer_music_custom': {
-                    this.addInitToken('B');
-                    const melody = this.serializeValueInput(block, 'MELODY') || '""';
-                    // We need to strip the quotes if any because the EMMI script expects just the string content
-                    const cleanMelody = melody.replace(/^"|"$/g, '').replace(/^'|'$/g, '');
-                    return ['BP' + cleanMelody];
-                }
+                    return ['BN' + (block.getFieldValue('SOLFA') || block.getFieldValue('NOTE') || 'A4')];
                 case 'emmi_buzzer_frequency': {
                     this.addInitToken('B');
                     const freq = this.serializeValueInput(block, 'FREQUENCY', 'F') || '440';
@@ -241,33 +289,12 @@
                 case 'bluetooth_serial_write':
                     return ['R(W,' + (this.serializeValueInput(block, 'VALUE') || '""') + ')'];
                 case 'custom_controls_if': {
-                    let expr = this.serializeValueInput(block, 'IF0') || 'O=,1,0';
-                    if (!expr.startsWith('O')) expr = 'O=,' + expr + ',1';
+                    const expr = this.serializeValueInput(block, 'IF0') || 'O=,1,0';
                     const thenTokens = this.serializeChain(this.getInputTarget(block, 'DO0'));
                     return ['C(' + expr + '){' + this.wrapBody(thenTokens) + '}{}'];
                 }
-                case 'custom_controls_ifelse': {
-                    let expr = this.serializeValueInput(block, 'IF0') || 'O=,1,0';
-                    if (!expr.startsWith('O')) expr = 'O=,' + expr + ',1';
-                    const thenTokens = this.serializeChain(this.getInputTarget(block, 'DO0'));
-                    const elseTokens = this.serializeChain(this.getInputTarget(block, 'ELSE'));
-                    return ['C(' + expr + '){' + this.wrapBody(thenTokens) + '}{' + this.wrapBody(elseTokens) + '}'];
-                }
-                case 'custom_controls_if_ifnot': {
-                    let expr0 = this.serializeValueInput(block, 'IF0') || 'O=,1,0';
-                    if (!expr0.startsWith('O')) expr0 = 'O=,' + expr0 + ',1';
-                    const thenTokens0 = this.serializeChain(this.getInputTarget(block, 'DO0'));
-
-                    let expr1 = this.serializeValueInput(block, 'IF1') || 'O=,1,0';
-                    if (!expr1.startsWith('O')) expr1 = 'O=,' + expr1 + ',1';
-                    const thenTokens1 = this.serializeChain(this.getInputTarget(block, 'DO1'));
-
-                    const elseCmd = 'C(' + expr1 + '){' + this.wrapBody(thenTokens1) + '}{}';
-                    return ['C(' + expr0 + '){' + this.wrapBody(thenTokens0) + '}{|' + elseCmd + '|}'];
-                }
                 case 'custom_controls_whileUntil': {
                     let expr = this.serializeValueInput(block, 'BOOL') || 'O=,1,0';
-                    if (!expr.startsWith('O')) expr = 'O=,' + expr + ',1';
                     if (block.getFieldValue('MODE') === 'UNTIL') {
                         expr = 'O=,' + expr + ',0';
                     }
@@ -308,10 +335,7 @@
             const colorMap = {
                 PIN_EYE_RED: 'ER',
                 PIN_EYE_GREEN: 'EG',
-                PIN_EYE_BLUE: 'EB',
-                RED: 'ER',
-                GREEN: 'EG',
-                BLUE: 'EB'
+                PIN_EYE_BLUE: 'EB'
             };
             return (colorMap[pin] || 'EA') + state;
         }
@@ -352,6 +376,11 @@
         }
 
         serializeValueBlock(block, expectedType) {
+            const custom = this.resolveCustomValueToken(block);
+            if (custom.matched) {
+                return custom.value;
+            }
+
             switch (block.type) {
                 case 'math_number':
                     return String(block.getFieldValue('NUM'));
@@ -371,22 +400,6 @@
                 case 'emmi_mic_read':
                     this.addInitToken('A');
                     return 'AR';
-                case 'esp32_digital_state': {
-                    const pin = block.getFieldValue('PIN');
-                    if (pin === 'PIN_TOUCH' || pin === 'TOUCH') {
-                        this.addInitToken('T');
-                        return 'TR';
-                    }
-                    if (pin === 'PIN_MIC' || pin === 'MIC') {
-                        this.addInitToken('A');
-                        return 'AR';
-                    }
-                    if (pin === 'PIN_LIGHT' || pin === 'LIGHT') {
-                        this.addInitToken('V');
-                        return 'VR';
-                    }
-                    return '0';
-                }
                 case 'bluetooth_serial_available':
                     return 'R(A)';
                 case 'bluetooth_serial_read_byte':

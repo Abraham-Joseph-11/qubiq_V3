@@ -4,8 +4,6 @@
    Variable Blocks - Custom Implementation
    ======================================================= */
 
-const VARIABLE_COLOR = "#FF6D00"; // Orange/Yellow 
-
 // 1. Declare Variable
 Blockly.Blocks['custom_variable_declare'] = {
     init: function () {
@@ -26,7 +24,7 @@ Blockly.Blocks['custom_variable_declare'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(VARIABLE_COLOR);
+        this.setColour("#FF6D00");
         this.setTooltip("Declare a variable with a specific type and initial value.");
         this.setHelpUrl("");
     }
@@ -43,7 +41,7 @@ Blockly.Blocks['custom_variable_set'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(VARIABLE_COLOR);
+        this.setColour("#FF6D00");
         this.setTooltip("Set a variable to a value.");
         this.setHelpUrl("");
     }
@@ -60,7 +58,7 @@ Blockly.Blocks['custom_variable_change'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(VARIABLE_COLOR);
+        this.setColour("#FF6D00");
         this.setTooltip("Change a variable by a certain amount (e.g. increment).");
         this.setHelpUrl("");
     }
@@ -86,7 +84,7 @@ Blockly.Blocks['custom_constant_declare'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(VARIABLE_COLOR);
+        this.setColour("#FF6D00");
         this.setTooltip("Declare a constant value.");
         this.setHelpUrl("");
     }
@@ -103,7 +101,7 @@ Blockly.Blocks['custom_constant_set'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(VARIABLE_COLOR);
+        this.setColour("#FF6D00");
         this.setTooltip("Define a constant equivalent.");
         this.setHelpUrl("");
     }
@@ -115,7 +113,7 @@ Blockly.Blocks['custom_variable_get'] = {
         this.appendDummyInput()
             .appendField(new Blockly.FieldVariable("item"), "VAR");
         this.setOutput(true, null);
-        this.setColour(VARIABLE_COLOR);
+        this.setColour("#FF6D00");
         this.setTooltip("Get the value of a variable.");
         this.setHelpUrl("");
     }

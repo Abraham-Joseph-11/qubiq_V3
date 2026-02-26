@@ -118,68 +118,24 @@ Blockly.Blocks['state_duration'] = {
 /* =======================================================
    Control Blocks (Customized for Style)
    ======================================================= */
-const CONTROL_COLOR = "#FFAB19"; // Yellow/Orange from screenshot
-
 // 1. Unless / If (Screenshot shows "if ... then")
 // Note: Standard controls_if is complex. We'll implement a simplified version.
 Blockly.Blocks['custom_controls_if'] = {
     init: function () {
         this.appendValueInput("IF0")
             .setCheck("Boolean")
+            .appendField("if")
             .appendField(new Blockly.FieldImage("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2Ij48cGF0aCBkPSJNMTkuMTQgMTIuOTRjLjA0LS4zLjA2LS42MS4wNi0uOTQgMC0uMzItLjAyLS42NC0uMDctLjk0bDIuMDMtMS41OGMuMTgtLjE0LjIzLS40MS4xMi0uNjFsLTEuOTItMy4zMmMtLjEyLS4yMi0uMzctLjI5LS41OS0uMjJsLTIuMzkuOTZjLS41LS4zOC0xLjAzLS43LTEuNjItLjk0bC0uMzYtMi41NGMtLjA0LS4yNC0uMjQtLjQxLS40OC0uNDFoLTMuODRjLS4yNCAwLS40My4xNy0uNDcuNDFsLS4zNiAyLjU0Yy0uNTkuMjQtMS4xMy41Ny0xLjYyLjk0bC0yLjM5LS45NmMtLjIyLS4wOC0uNDcgMC0uNTkuMjJMMi43NCA4Ljg3Yy0uMTIuMjEtLjA4LjQ3LjEyLjYxbDIuMDMgMS41OGMtLjA1LjMtLjA5LjYzLS4wOS45NHMuMDIuNjQuMDcuOTRsLTIuMDMgMS41OGMtLjE4LjE0LS4yMy40MS0uMTIuNjFsMS45MiAzLjMyYy4xMi4yMi4zNy4yOS41OS4yMmwyLjM5LS45NmMuNS4zOCAxLjAzLjcgMS42Mi45NGwuMzYgMi41NGMuMDUuMjQuMjQuNDEuNDguNDFoMy44NGMuMjQgMCAuNDQtLjE3LjQ3LS40MWwuMzYtMi41NGMuNTktLjI0IDEuMTMtLjU4IDEuNjItLjk0bDIuMzkuOTZjLjIyLjA4LjQ3IDAgLjU5LS4yMmwxLjkyLTMuMzJjLjEyLS4yMi4wNy0uNDctLjEyLS42MWwtMi4wMS0uNTh6TTEyIDE1LjZjLTEuOTggMC0zLjYtMS42Mi0zLjYtMy42czEuNjItMy42IDMuNi0zLjYgMy42IDEuNjIgMy42IDMuNi0xLjYyIDMuNi0zLjYgMy42eiIgZmlsbD0iIzU1NSIvPjwvc3ZnPg==", 16, 16, "*")) // Gear icon
-            .appendField("if");
-        this.appendStatementInput("DO0")
-            .setCheck(null)
             .appendField("then");
+        this.appendStatementInput("DO0")
+            .setCheck(null);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(CONTROL_COLOR);
+        this.setColour("#FFAB19");
         this.setTooltip("If condition is true, then do something.");
         this.setHelpUrl("");
         // Note: Full mutator support requires extensions. 
         // For now, this is a basic IF block matching valid look.
-    }
-};
-
-Blockly.Blocks['custom_controls_ifelse'] = {
-    init: function () {
-        this.appendValueInput("IF0")
-            .setCheck("Boolean")
-            .appendField(new Blockly.FieldImage("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2Ij48cGF0aCBkPSJNMTkuMTQgMTIuOTRjLjA0LS4zLjA2LS42MS4wNi0uOTQgMC0uMzItLjAyLS42NC0uMDctLjk0bDIuMDMtMS41OGMuMTgtLjE0LjIzLS40MS4xMi0uNjFsLTEuOTItMy4zMmMtLjEyLS4yMi0uMzctLjI5LS41OS0uMjJsLTIuMzkuOTZjLS41LS4zOC0xLjAzLS43LTEuNjItLjk0bC0uMzYtMi41NGMtLjA0LS4yNC0uMjQtLjQxLS40OC0uNDFoLTMuODRjLS4yNCAwLS40My4xNy0uNDcuNDFsLS4zNiAyLjU0Yy0uNTkuMjQtMS4xMy41Ny0xLjYyLjk0bC0yLjM5LS45NmMtLjIyLS4wOC0uNDcgMC0uNTkuMjJMMi43NCA4Ljg3Yy0uMTIuMjEtLjA4LjQ3LjEyLjYxbDIuMDMgMS41OGMtLjA1LjMtLjA5LjYzLS4wOS45NHMuMDIuNjQuMDcuOTRsLTIuMDMgMS41OGMtLjE4LjE0LS4yMy40MS0uMTIuNjFsMS45MiAzLjMyYy4xMi4yMi4zNy4yOS41OS4yMmwyLjM5LS45NmMuNS4zOCAxLjAzLjcgMS42Mi45NGwuMzYgMi41NGMuMDUuMjQuMjQuNDEuNDguNDFoMy44NGMuMjQgMCAuNDQtLjE3LjQ3LS40MWwuMzYtMi41NGMuNTktLjI0IDEuMTMtLjU4IDEuNjItLjk0bDIuMzkuOTZjLjIyLjA4LjQ3IDAgLjU5LS4yMmwxLjkyLTMuMzJjLjEyLS4yMi4wNy0uNDctLjEyLS42MWwtMi4wMS0uNTh6TTEyIDE1LjZjLTEuOTggMC0zLjYtMS42Mi0zLjYtMy42czEuNjItMy42IDMuNi0zLjYgMy42IDEuNjIgMy42IDMuNi0xLjYyIDMuNi0zLjYgMy42eiIgZmlsbD0iIzU1NSIvPjwvc3ZnPg==", 16, 16, "*")) // Gear icon
-            .appendField("if");
-        this.appendStatementInput("DO0")
-            .setCheck(null)
-            .appendField("then");
-        this.appendStatementInput("ELSE")
-            .setCheck(null)
-            .appendField("else");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(CONTROL_COLOR);
-        this.setTooltip("If condition is true, then do something. Else do something else.");
-        this.setHelpUrl("");
-    }
-};
-
-Blockly.Blocks['custom_controls_if_ifnot'] = {
-    init: function () {
-        this.appendValueInput("IF0")
-            .setCheck("Boolean")
-            .appendField(new Blockly.FieldImage("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2Ij48cGF0aCBkPSJNMTkuMTQgMTIuOTRjLjA0LS4zLjA2LS42MS4wNi0uOTQgMC0uMzItLjAyLS42NC0uMDctLjk0bDIuMDMtMS41OGMuMTgtLjE0LjIzLS40MS4xMi0uNjFsLTEuOTItMy4zMmMtLjEyLS4yMi0uMzctLjI5LS41OS0uMjJsLTIuMzkuOTZjLS41LS4zOC0xLjAzLS43LTEuNjItLjk0bC0uMzYtMi41NGMtLjA0LS4yNC0uMjQtLjQxLS40OC0uNDFoLTMuODRjLS4yNCAwLS40My4xNy0uNDcuNDFsLS4zNiAyLjU0Yy0uNTkuMjQtMS4xMy41Ny0xLjYyLjk0bC0yLjM5LS45NmMtLjIyLS4wOC0uNDcgMC0uNTkuMjJMMi43NCA4Ljg3Yy0uMTIuMjEtLjA4LjQ3LjEyLjYxbDIuMDMgMS41OGMtLjA1LjMtLjA5LjYzLS4wOS45NHMuMDIuNjQuMDcuOTRsLTIuMDMgMS41OGMtLjE4LjE0LS4yMy40MS0uMTIuNjFsMS45MiAzLjMyYy4xMi4yMi4zNy4yOS41OS4yMmwyLjM5LS45NmMuNS4zOCAxLjAzLjcgMS42Mi45NGwuMzYgMi41NGMuMDUuMjQuMjQuNDEuNDguNDFoMy44NGMuMjQgMCAuNDQtLjE3LjQ3LS40MWwuMzYtMi41NGMuNTktLjI0IDEuMTMtLjU4IDEuNjItLjk0bDIuMzkuOTZjLjIyLjA4LjQ3IDAgLjU5LS4yMmwxLjkyLTMuMzJjLjEyLS4yMi4wNy0uNDctLjEyLS42MWwtMi4wMS0uNTh6TTEyIDE1LjZjLTEuOTggMC0zLjYtMS42Mi0zLjYtMy42czEuNjItMy42IDMuNi0zLjYgMy42IDEuNjIgMy42IDMuNi0xLjYyIDMuNi0zLjYgMy42eiIgZmlsbD0iIzU1NSIvPjwvc3ZnPg==", 16, 16, "*")) // Gear icon
-            .appendField("if");
-        this.appendStatementInput("DO0")
-            .setCheck(null)
-            .appendField("then");
-        this.appendValueInput("IF1")
-            .setCheck("Boolean")
-            .appendField("ifnot");
-        this.appendStatementInput("DO1")
-            .setCheck(null);
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(CONTROL_COLOR);
-        this.setTooltip("If condition is true then do something, else if another condition is true do something else.");
-        this.setHelpUrl("");
     }
 };
 
@@ -197,7 +153,7 @@ Blockly.Blocks['custom_controls_repeat'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(CONTROL_COLOR);
+        this.setColour("#FFAB19");
         this.setTooltip("Repeat N times.");
         this.setHelpUrl("");
     }
@@ -215,7 +171,7 @@ Blockly.Blocks['custom_controls_whileUntil'] = {
         this.setInputsInline(false);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(CONTROL_COLOR);
+        this.setColour("#FFAB19");
         this.setTooltip("Repeat while or until condition is met.");
         this.setHelpUrl("");
     }
@@ -243,7 +199,7 @@ Blockly.Blocks['custom_controls_for'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(CONTROL_COLOR);
+        this.setColour("#FFAB19");
         this.setTooltip("Loop with counter.");
         this.setHelpUrl("");
     }
@@ -267,7 +223,7 @@ Blockly.Blocks['custom_controls_switch'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(CONTROL_COLOR);
+        this.setColour("#FFAB19");
         this.setTooltip("Switch case logic.");
         this.setHelpUrl("");
     }
@@ -280,7 +236,7 @@ Blockly.Blocks['custom_flow_statements'] = {
             .appendField(new Blockly.FieldDropdown([["exit the loop", "BREAK"], ["continue with next iteration", "CONTINUE"]]), "FLOW");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(CONTROL_COLOR);
+        this.setColour("#FFAB19");
         this.setTooltip("Exit or continue loop.");
         this.setHelpUrl("");
     }
@@ -297,7 +253,7 @@ Blockly.Blocks['custom_logic_and'] = {
             .setCheck("Boolean");
         this.setInputsInline(true);
         this.setOutput(true, "Boolean");
-        this.setColour(CONTROL_COLOR);
+        this.setColour("#FFAB19");
         this.setTooltip("Logical AND/OR.");
         this.setHelpUrl("");
     }
@@ -310,7 +266,7 @@ Blockly.Blocks['custom_logic_not'] = {
             .setCheck("Boolean")
             .appendField("not");
         this.setOutput(true, "Boolean");
-        this.setColour(CONTROL_COLOR);
+        this.setColour("#FFAB19");
         this.setTooltip("Logical NOT.");
         this.setHelpUrl("");
     }
@@ -322,7 +278,7 @@ Blockly.Blocks['custom_logic_null'] = {
         this.appendDummyInput()
             .appendField("null");
         this.setOutput(true, null);
-        this.setColour(CONTROL_COLOR);
+        this.setColour("#FFAB19");
         this.setTooltip("Null value.");
         this.setHelpUrl("");
     }
@@ -331,24 +287,19 @@ Blockly.Blocks['custom_logic_null'] = {
 /* =======================================================
    Arduino / ESP32 Blocks (Screenshot Implementation)
    ======================================================= */
-const ARDUINO_COLOR = "#00838F"; // Teal
-
 // 1. Digital Write
 Blockly.Blocks['esp32_digital_write'] = {
     init: function () {
         this.appendDummyInput()
             .appendField("digital write PIN")
             .appendField(new Blockly.FieldDropdown([
-                ["Red", "RED"], ["Green", "GREEN"], ["Blue", "BLUE"],
-                ["MIC", "PIN_MIC"], ["BUZZER", "PIN_BUZZER"], ["TOUCH", "PIN_TOUCH"],
-                ["MOTOR1", "MOTOR_L1"], ["MOTOR2", "MOTOR_L2"],
-                ["MOTOR3", "MOTOR_R1"], ["MOTOR4", "MOTOR_R2"]
+                ["23", "23"], ["2", "2"], ["4", "4"], ["5", "5"], ["12", "12"], ["13", "13"], ["14", "14"], ["15", "15"], ["18", "18"], ["19", "19"]
             ]), "PIN")
             .appendField("to")
             .appendField(new Blockly.FieldDropdown([["HIGH", "HIGH"], ["LOW", "LOW"]]), "STATE");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(ARDUINO_COLOR);
+        this.setColour("#00838F");
         this.setTooltip("Write to a digital pin.");
         this.setHelpUrl("");
     }
@@ -360,15 +311,12 @@ Blockly.Blocks['esp32_digital_state'] = {
         this.appendDummyInput()
             .appendField("digital state PIN")
             .appendField(new Blockly.FieldDropdown([
-                ["Red", "RED"], ["Green", "GREEN"], ["Blue", "BLUE"],
-                ["MIC", "PIN_MIC"], ["BUZZER", "PIN_BUZZER"], ["TOUCH", "PIN_TOUCH"],
-                ["MOTOR1", "MOTOR_L1"], ["MOTOR2", "MOTOR_L2"],
-                ["MOTOR3", "MOTOR_R1"], ["MOTOR4", "MOTOR_R2"]
+                ["Red", "RED"], ["Blue", "BLUE"], ["Green", "GREEN"], ["23", "23"], ["2", "2"], ["4", "4"]
             ]), "PIN")
             .appendField("pull-up")
             .appendField(new Blockly.FieldCheckbox("FALSE"), "PULLUP");
-        this.setOutput(true, null);
-        this.setColour(ARDUINO_COLOR);
+        this.setOutput(true, "Boolean");
+        this.setColour("#00838F");
         this.setTooltip("Read digital pin state.");
         this.setHelpUrl("");
     }
@@ -388,7 +336,7 @@ Blockly.Blocks['esp32_analog_write'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(ARDUINO_COLOR);
+        this.setColour("#00838F");
         this.setTooltip("Write analog value (PWM).");
         this.setHelpUrl("");
     }
@@ -400,11 +348,10 @@ Blockly.Blocks['esp32_analog_read'] = {
         this.appendDummyInput()
             .appendField("analog read PIN")
             .appendField(new Blockly.FieldDropdown([
-                ["13", "13"], ["OUT2", "OUT2"], ["OUT3", "OUT3"], ["OUT4", "OUT4"], ["OUT5", "OUT5"],
-                ["IN1", "IN1"], ["IN2 only read", "IN2"], ["LDR", "LDR"], ["IN4 only read", "IN4"], ["IN5 only read", "IN5"]
+                ["IN1", "IN1"], ["32", "32"], ["33", "33"], ["34", "34"], ["35", "35"]
             ]), "PIN");
         this.setOutput(true, "Number");
-        this.setColour(ARDUINO_COLOR);
+        this.setColour("#00838F");
         this.setTooltip("Read analog value.");
         this.setHelpUrl("");
     }
@@ -420,7 +367,7 @@ Blockly.Blocks['esp32_toggle_pin'] = {
             ]), "PIN");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(ARDUINO_COLOR);
+        this.setColour("#00838F");
         this.setTooltip("Toggle the state of a digital pin.");
         this.setHelpUrl("");
     }
@@ -443,7 +390,7 @@ Blockly.Blocks['esp32_interrupt'] = {
             .appendField("then");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(ARDUINO_COLOR);
+        this.setColour("#00838F");
         this.setTooltip("Attach an interrupt.");
         this.setHelpUrl("");
     }
@@ -459,7 +406,7 @@ Blockly.Blocks['esp32_detach_interrupt'] = {
             ]), "PIN");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(ARDUINO_COLOR);
+        this.setColour("#00838F");
         this.setTooltip("Detach an interrupt.");
         this.setHelpUrl("");
     }
@@ -472,7 +419,7 @@ Blockly.Blocks['esp32_restart'] = {
             .appendField("Restart ESP8266/ESP32");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(ARDUINO_COLOR);
+        this.setColour("#00838F");
         this.setTooltip("Restart the microcontroller.");
         this.setHelpUrl("");
     }
@@ -490,7 +437,7 @@ Blockly.Blocks['esp32_deep_sleep'] = {
         this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-        this.setColour(ARDUINO_COLOR);
+        this.setColour("#00838F");
         this.setTooltip("Enter deep sleep for N seconds.");
         this.setHelpUrl("");
     }
@@ -499,8 +446,6 @@ Blockly.Blocks['esp32_deep_sleep'] = {
 /* =======================================================
    Operator Blocks (Custom Implementations)
    ======================================================= */
-const OPERATORS_COLOR = "#388E3C"; // Green
-
 // 1. Map
 Blockly.Blocks['custom_math_map'] = {
     init: function () {
@@ -521,7 +466,7 @@ Blockly.Blocks['custom_math_map'] = {
             .appendField("-");
         this.setInputsInline(true);
         this.setOutput(true, "Number");
-        this.setColour(OPERATORS_COLOR);
+        this.setColour("#388E3C");
         this.setTooltip("Map a value from one range to another.");
         this.setHelpUrl("");
     }
@@ -538,7 +483,7 @@ Blockly.Blocks['custom_math_random_int'] = {
             .appendField("&");
         this.setInputsInline(true);
         this.setOutput(true, "Number");
-        this.setColour(OPERATORS_COLOR);
+        this.setColour("#388E3C");
         this.setTooltip("Return a random integer between the two values.");
         this.setHelpUrl("");
     }
@@ -558,7 +503,7 @@ Blockly.Blocks['custom_math_constrain'] = {
             .appendField("&");
         this.setInputsInline(true);
         this.setOutput(true, "Number");
-        this.setColour(OPERATORS_COLOR);
+        this.setColour("#388E3C");
         this.setTooltip("Constrain a number to be between the specified limits (inclusive).");
         this.setHelpUrl("");
     }
@@ -571,7 +516,7 @@ Blockly.Blocks['cast_to_byte'] = {
             .setCheck(null)
             .appendField("Casting to Byte");
         this.setOutput(true, "Number");
-        this.setColour(OPERATORS_COLOR);
+        this.setColour("#388E3C");
         this.setTooltip("Cast value to Byte (unsigned char).");
         this.setHelpUrl("");
     }
@@ -584,7 +529,7 @@ Blockly.Blocks['cast_to_unsigned_int'] = {
             .setCheck(null)
             .appendField("Casting to unsigned Int");
         this.setOutput(true, "Number");
-        this.setColour(OPERATORS_COLOR);
+        this.setColour("#388E3C");
         this.setTooltip("Cast value to unsigned int.");
         this.setHelpUrl("");
     }
@@ -597,7 +542,7 @@ Blockly.Blocks['cast_to_int'] = {
             .setCheck(null)
             .appendField("Casting to Int");
         this.setOutput(true, "Number");
-        this.setColour(OPERATORS_COLOR);
+        this.setColour("#388E3C");
         this.setTooltip("Cast value to integer.");
         this.setHelpUrl("");
     }
@@ -610,7 +555,7 @@ Blockly.Blocks['cast_to_float'] = {
             .setCheck(null)
             .appendField("Casting to Float");
         this.setOutput(true, "Number");
-        this.setColour(OPERATORS_COLOR);
+        this.setColour("#388E3C");
         this.setTooltip("Cast value to float.");
         this.setHelpUrl("");
     }

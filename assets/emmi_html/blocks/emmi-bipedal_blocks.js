@@ -4,17 +4,5 @@
  */
 
 // ⚙️ joju blocks
-Blockly.Blocks['hoh'] = {
-    init: function() {
-        this.jsonInit({
-            "type": "hoh",
-            "message0": "hoh",
-            "colour": "#424242",
-            "tooltip": "hoh",
-            "helpUrl": ""
-        });
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-    }
-};
+
 

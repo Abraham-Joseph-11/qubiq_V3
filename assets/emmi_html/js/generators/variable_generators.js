@@ -16,67 +16,125 @@ function sanitizeVarName(name) {
 }
 
 // 1. Declare Variable
-arduinoGenerator.forBlock['custom_variable_declare'] = function (block) {
-    // Custom sanitize - USE getText() to get name, not ID
+javaGenerator.forBlock['custom_variable_declare'] = function (block) {
     var variable_name = sanitizeVarName(block.getField('VAR').getText());
-
     var dropdown_type = block.getFieldValue('TYPE');
-    var value_value = arduinoGenerator.valueToCode(block, 'VALUE', arduinoGenerator.ORDER_ATOMIC) || '0';
-
-    // Register global variable
-    arduinoGenerator.variables_[variable_name] = dropdown_type + ' ' + variable_name + ';';
-
-    return variable_name + ' = ' + value_value + ';\n';
+    var value_value = javaGenerator.valueToCode(block, 'VALUE', javaGenerator.ORDER_ATOMIC) || '0';
+    return '        ' + dropdown_type + ' ' + variable_name + ' = ' + value_value + ';\n';
 };
 
 // 2. Set Variable
-arduinoGenerator.forBlock['custom_variable_set'] = function (block) {
+javaGenerator.forBlock['custom_variable_set'] = function (block) {
     var variable_name = sanitizeVarName(block.getField('VAR').getText());
-    // Use ORDER_ATOMIC to be safe, matching other blocks
-    var value_value = arduinoGenerator.valueToCode(block, 'VALUE', arduinoGenerator.ORDER_ATOMIC) || '0';
-    return variable_name + ' = ' + value_value + ';\n';
+    var value_value = javaGenerator.valueToCode(block, 'VALUE', javaGenerator.ORDER_ATOMIC) || '0';
+    return '        ' + variable_name + ' = ' + value_value + ';\n';
 };
 
 // 3. Change Variable
-arduinoGenerator.forBlock['custom_variable_change'] = function (block) {
+javaGenerator.forBlock['custom_variable_change'] = function (block) {
     var variable_name = sanitizeVarName(block.getField('VAR').getText());
-    var value_value = arduinoGenerator.valueToCode(block, 'VALUE', arduinoGenerator.ORDER_ATOMIC) || '1';
-    return variable_name + ' += ' + value_value + ';\n';
+    var value_value = javaGenerator.valueToCode(block, 'VALUE', javaGenerator.ORDER_ATOMIC) || '1';
+    return '        ' + variable_name + ' += ' + value_value + ';\n';
 };
 
 // 4. Declare Constant
-arduinoGenerator.forBlock['custom_constant_declare'] = function (block) {
-    // Custom sanitize - USE getText() because it's now a FieldVariable (dropdown)
+javaGenerator.forBlock['custom_constant_declare'] = function (block) {
     var text_var = block.getField('VAR').getText();
     var dropdown_type = block.getFieldValue('TYPE');
-    var value_value = arduinoGenerator.valueToCode(block, 'VALUE', arduinoGenerator.ORDER_ATOMIC) || '0';
-
+    var value_value = javaGenerator.valueToCode(block, 'VALUE', javaGenerator.ORDER_ATOMIC) || '0';
     var cleanName = sanitizeVarName(text_var);
-    // User requested NO prefix
-    // if (!cleanName.startsWith('const_')) cleanName = "const_" + cleanName;
-
-    arduinoGenerator.variables_[cleanName] = 'const ' + dropdown_type + ' ' + cleanName + ' = ' + value_value + ';';
-
-    return '';
-};
-
-// 5. Set Constant (Define)
-arduinoGenerator.forBlock['custom_constant_set'] = function (block) {
-    // Custom sanitize - USE getText() because it's now a FieldVariable (dropdown)
-    var text_var = block.getField('VAR').getText();
-    var value_value = arduinoGenerator.valueToCode(block, 'VALUE', arduinoGenerator.ORDER_ATOMIC) || '0';
-
-    var cleanName = sanitizeVarName(text_var);
-    // User requested NO prefix
-    // if (!cleanName.startsWith('DEF_')) cleanName = "DEF_" + cleanName;
-
-    arduinoGenerator.includes_['define_' + cleanName] = '#define ' + cleanName + ' ' + value_value;
-
-    return '';
+    return '        final ' + dropdown_type + ' ' + cleanName + ' = ' + value_value + ';\n';
 };
 
 // 6. Variable Getter
-arduinoGenerator.forBlock['custom_variable_get'] = function (block) {
+javaGenerator.forBlock['custom_variable_get'] = function (block) {
     var variable_name = sanitizeVarName(block.getField('VAR').getText());
-    return [variable_name, arduinoGenerator.ORDER_ATOMIC];
+    return [variable_name, javaGenerator.ORDER_ATOMIC];
+};
+
+/* =======================================================
+   Python Variable Generators
+   ======================================================= */
+
+pythonGenerator.forBlock['custom_variable_declare'] = function (block) {
+    var variable_name = sanitizeVarName(block.getField('VAR').getText());
+    var value_value = pythonGenerator.valueToCode(block, 'VALUE', pythonGenerator.ORDER_ATOMIC) || '0';
+    return variable_name + ' = ' + value_value + '\n';
+};
+
+pythonGenerator.forBlock['custom_variable_set'] = function (block) {
+    var variable_name = sanitizeVarName(block.getField('VAR').getText());
+    var value_value = pythonGenerator.valueToCode(block, 'VALUE', pythonGenerator.ORDER_ATOMIC) || '0';
+    return variable_name + ' = ' + value_value + '\n';
+};
+
+pythonGenerator.forBlock['custom_variable_change'] = function (block) {
+    var variable_name = sanitizeVarName(block.getField('VAR').getText());
+    var value_value = pythonGenerator.valueToCode(block, 'VALUE', pythonGenerator.ORDER_ATOMIC) || '1';
+    return variable_name + ' += ' + value_value + '\n';
+};
+
+pythonGenerator.forBlock['custom_constant_declare'] = function (block) {
+    var text_var = block.getField('VAR').getText();
+    var value_value = pythonGenerator.valueToCode(block, 'VALUE', pythonGenerator.ORDER_ATOMIC) || '0';
+    var cleanName = sanitizeVarName(text_var);
+    pythonGenerator.definitions_['const_' + cleanName] = cleanName + ' = ' + value_value + '  # constant';
+    return '';
+};
+
+javaGenerator.forBlock['custom_constant_set'] = function (block) {
+    var text_var = block.getField('VAR').getText();
+    var value_value = javaGenerator.valueToCode(block, 'VALUE', javaGenerator.ORDER_ATOMIC) || '0';
+    var cleanName = sanitizeVarName(text_var);
+    return '        // #define ' + cleanName + ' ' + value_value + '\n' +
+        '        final int ' + cleanName + ' = ' + value_value + ';\n';
+};
+
+pythonGenerator.forBlock['custom_variable_get'] = function (block) {
+    var variable_name = sanitizeVarName(block.getField('VAR').getText());
+    return [variable_name, pythonGenerator.ORDER_ATOMIC];
+};
+
+/* =======================================================
+   Java Variable Generators
+   ======================================================= */
+
+javaGenerator.forBlock['custom_variable_declare'] = function (block) {
+    var variable_name = sanitizeVarName(block.getField('VAR').getText());
+    var dropdown_type = block.getFieldValue('TYPE');
+    var value_value = javaGenerator.valueToCode(block, 'VALUE', javaGenerator.ORDER_ATOMIC) || '0';
+    return '        ' + dropdown_type + ' ' + variable_name + ' = ' + value_value + ';\n';
+};
+
+javaGenerator.forBlock['custom_variable_set'] = function (block) {
+    var variable_name = sanitizeVarName(block.getField('VAR').getText());
+    var value_value = javaGenerator.valueToCode(block, 'VALUE', javaGenerator.ORDER_ATOMIC) || '0';
+    return '        ' + variable_name + ' = ' + value_value + ';\n';
+};
+
+javaGenerator.forBlock['custom_variable_change'] = function (block) {
+    var variable_name = sanitizeVarName(block.getField('VAR').getText());
+    var value_value = javaGenerator.valueToCode(block, 'VALUE', javaGenerator.ORDER_ATOMIC) || '1';
+    return '        ' + variable_name + ' += ' + value_value + ';\n';
+};
+
+javaGenerator.forBlock['custom_constant_declare'] = function (block) {
+    var text_var = block.getField('VAR').getText();
+    var dropdown_type = block.getFieldValue('TYPE');
+    var value_value = javaGenerator.valueToCode(block, 'VALUE', javaGenerator.ORDER_ATOMIC) || '0';
+    var cleanName = sanitizeVarName(text_var);
+    return '        final ' + dropdown_type + ' ' + cleanName + ' = ' + value_value + ';\n';
+};
+
+javaGenerator.forBlock['custom_constant_set'] = function (block) {
+    var text_var = block.getField('VAR').getText();
+    var value_value = javaGenerator.valueToCode(block, 'VALUE', javaGenerator.ORDER_ATOMIC) || '0';
+    var cleanName = sanitizeVarName(text_var);
+    return '        // #define ' + cleanName + ' ' + value_value + '\n' +
+        '        final int ' + cleanName + ' = ' + value_value + ';\n';
+};
+
+javaGenerator.forBlock['custom_variable_get'] = function (block) {
+    var variable_name = sanitizeVarName(block.getField('VAR').getText());
+    return [variable_name, javaGenerator.ORDER_ATOMIC];
 };
