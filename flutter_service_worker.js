@@ -3,11 +3,11 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"flutter_bootstrap.js": "920fde46ecb2281c59d5e87e66541b2d",
+const RESOURCES = {"flutter_bootstrap.js": "7065967c53c64f36f6bdd8ee3cb9f4c1",
 "version.json": "70073abd017641a548a16de01bccc9dd",
 "index.html": "f6cb5b7ca19fc870843d9a853fb2c025",
 "/": "f6cb5b7ca19fc870843d9a853fb2c025",
-"main.dart.js": "7cbea484a0bda3bc091c67067971b5e0",
+"main.dart.js": "d333bbe686522e3ab3c55d082453417c",
 "excel/index.html": "19f1d618801f0256c3bf8549a0792dd1",
 "excel/vite.svg": "8e3a10e157f75ada21ab742c022d5430",
 "excel/assets/index-Ee9A-V15.js": "620e5f1067cafa4be1bafa8967ae4b99",
@@ -69,7 +69,7 @@ const RESOURCES = {"flutter_bootstrap.js": "920fde46ecb2281c59d5e87e66541b2d",
 "assets/lib/Resources/little_emmi.svg": "487ab1892de482fa27b3402403632c36",
 "assets/lib/Resources/BlocksStructure/blueCmd.svg": "e079a89c5b339a89ae8998ccb396d924",
 "assets/AssetManifest.bin": "26f38479fab682ed021d9b276d6f6eaa",
-"assets/fonts/MaterialIcons-Regular.otf": "32a4e879735cb9715b2ec853928a95eb",
+"assets/fonts/MaterialIcons-Regular.otf": "a68a16f5ae30d59cb12f64ac63101d46",
 "assets/assets/word_web/word/index.html": "d5e56ad89cbef2ea3f3d48d257fc1695",
 "assets/assets/word_web/word/styles.css": "fdce066064f49b5715b36133d9e90b84",
 "assets/assets/word_web/word/app.js": "f9606ee1f57c756ed3052849af7058dd",

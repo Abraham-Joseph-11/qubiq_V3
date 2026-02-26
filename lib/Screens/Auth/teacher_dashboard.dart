@@ -870,17 +870,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📝 CREATE TEST (MCQ Quiz Builder)
+  // 📝 CREATE TEST (MCQ + Short Answer + Scheduling)
   // ═══════════════════════════════════════════════════════════
   Future<void> _showCreateTestDialog() async {
     if (_classes.isEmpty) return;
     final selectedClass = _classes[_selectedClassIndex];
-
     final titleCtrl = TextEditingController();
     final subjectCtrl = TextEditingController();
     int durationMins = 15;
+    DateTime? scheduledDate;
+    TimeOfDay? scheduledTime;
     List<Map<String, dynamic>> questions = [];
-
     if (!mounted) return;
 
     showDialog(
@@ -898,112 +898,208 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     fontSize: 15, fontWeight: FontWeight.bold)),
           ]),
           content: SizedBox(
-            width: 500,
-            height: 500,
+            width: 520,
+            height: 520,
             child: SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                      controller: subjectCtrl,
-                      decoration: InputDecoration(
-                          labelText: 'Subject',
-                          prefixIcon: const Icon(Icons.book, size: 18),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)))),
-                  const SizedBox(height: 10),
-                  TextField(
-                      controller: titleCtrl,
-                      decoration: InputDecoration(
-                          labelText: 'Test Title',
-                          prefixIcon: const Icon(Icons.title_rounded, size: 18),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)))),
-                  const SizedBox(height: 10),
-                  Row(children: [
-                    Text("Duration: ",
-                        style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500, fontSize: 13)),
-                    DropdownButton<int>(
-                      value: durationMins,
-                      items: [5, 10, 15, 20, 30, 45, 60]
-                          .map((m) =>
-                              DropdownMenuItem(value: m, child: Text("$m min")))
-                          .toList(),
-                      onChanged: (v) =>
-                          setDialogState(() => durationMins = v ?? 15),
-                    ),
-                  ]),
-                  const Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Questions (${questions.length})",
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                        controller: subjectCtrl,
+                        decoration: InputDecoration(
+                            labelText: 'Subject',
+                            prefixIcon: const Icon(Icons.book, size: 18),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)))),
+                    const SizedBox(height: 10),
+                    TextField(
+                        controller: titleCtrl,
+                        decoration: InputDecoration(
+                            labelText: 'Test Title',
+                            prefixIcon:
+                                const Icon(Icons.title_rounded, size: 18),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)))),
+                    const SizedBox(height: 10),
+                    Row(children: [
+                      Text("Duration: ",
                           style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold, fontSize: 14)),
-                      TextButton.icon(
-                        icon: const Icon(Icons.add_circle_outline, size: 18),
-                        label: const Text("Add Question"),
-                        onPressed: () {
-                          _showAddQuestionDialog(context, (q) {
-                            setDialogState(() => questions.add(q));
-                          });
-                        },
+                              fontWeight: FontWeight.w500, fontSize: 13)),
+                      DropdownButton<int>(
+                        value: durationMins,
+                        items: [5, 10, 15, 20, 30, 45, 60]
+                            .map((m) => DropdownMenuItem(
+                                value: m, child: Text("$m min")))
+                            .toList(),
+                        onChanged: (v) =>
+                            setDialogState(() => durationMins = v ?? 15),
                       ),
-                    ],
-                  ),
-                  ...questions.asMap().entries.map((entry) {
-                    final i = entry.key;
-                    final q = entry.value;
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                          color: Colors.deepPurple.withOpacity(0.04),
-                          borderRadius: BorderRadius.circular(10),
-                          border:
-                              Border.all(color: Colors.deepPurple.shade100)),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    ]),
+                    const SizedBox(height: 6),
+                    Text("Schedule Test",
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: Colors.deepPurple)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.calendar_today, size: 16),
+                          label: Text(
+                              scheduledDate != null
+                                  ? DateFormat.yMMMd().format(scheduledDate!)
+                                  : "Pick Date",
+                              style: const TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10))),
+                          onPressed: () async {
+                            final d = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now()
+                                    .add(const Duration(days: 365)));
+                            if (d != null)
+                              setDialogState(() => scheduledDate = d);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.access_time, size: 16),
+                          label: Text(
+                              scheduledTime != null
+                                  ? scheduledTime!.format(context)
+                                  : "Pick Time",
+                              style: const TextStyle(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10))),
+                          onPressed: () async {
+                            final t = await showTimePicker(
+                                context: context, initialTime: TimeOfDay.now());
+                            if (t != null)
+                              setDialogState(() => scheduledTime = t);
+                          },
+                        ),
+                      ),
+                    ]),
+                    if (scheduledDate == null)
+                      Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text("Leave empty to publish immediately",
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey[500]))),
+                    const Divider(height: 20),
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("Q${i + 1}: ${q['question']}",
-                                    style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12)),
-                                const SizedBox(height: 4),
-                                ...List.generate(4, (oi) {
-                                  final options = q['options'] as List<String>;
-                                  final isCorrect = q['correct'] == oi;
-                                  return Text(
-                                      "${String.fromCharCode(65 + oi)}) ${options[oi]}",
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: isCorrect
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
-                                          color: isCorrect
-                                              ? Colors.green[700]
-                                              : Colors.grey[700]));
-                                }),
-                              ],
-                            ),
+                          Text("Questions (${questions.length})",
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.bold, fontSize: 14)),
+                          TextButton.icon(
+                            icon:
+                                const Icon(Icons.add_circle_outline, size: 18),
+                            label: const Text("Add Question"),
+                            onPressed: () => _showAddQuestionDialog(context,
+                                (q) => setDialogState(() => questions.add(q))),
                           ),
-                          IconButton(
-                            icon: Icon(Icons.delete_outline,
-                                size: 18, color: Colors.red[300]),
-                            onPressed: () =>
-                                setDialogState(() => questions.removeAt(i)),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ],
-              ),
+                        ]),
+                    ...questions.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final q = entry.value;
+                      final isMCQ = q['type'] == 'mcq';
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                            color: Colors.deepPurple.withOpacity(0.04),
+                            borderRadius: BorderRadius.circular(10),
+                            border:
+                                Border.all(color: Colors.deepPurple.shade100)),
+                        child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                              color: isMCQ
+                                                  ? Colors.deepPurple.shade50
+                                                  : Colors.blue.shade50,
+                                              borderRadius:
+                                                  BorderRadius.circular(4)),
+                                          child: Text(
+                                              isMCQ ? "MCQ" : "Short Answer",
+                                              style: TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isMCQ
+                                                      ? Colors.deepPurple
+                                                      : Colors.blue)),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                            child: Text(
+                                                "Q${i + 1}: ${q['question']}",
+                                                style: GoogleFonts.poppins(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 12),
+                                                maxLines: 2,
+                                                overflow:
+                                                    TextOverflow.ellipsis)),
+                                      ]),
+                                      const SizedBox(height: 4),
+                                      if (isMCQ)
+                                        ...List.generate(
+                                            (q['options'] as List).length,
+                                            (oi) {
+                                          final options =
+                                              q['options'] as List<String>;
+                                          final isCorrect = q['correct'] == oi;
+                                          return Text(
+                                              "${String.fromCharCode(65 + oi)}) ${options[oi]}",
+                                              style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: isCorrect
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                                  color: isCorrect
+                                                      ? Colors.green[700]
+                                                      : Colors.grey[700]));
+                                        })
+                                      else
+                                        Text(
+                                            "Model Answer: ${q['modelAnswer'] ?? 'N/A'}",
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey[600]),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis),
+                                    ]),
+                              ),
+                              IconButton(
+                                  icon: Icon(Icons.delete_outline,
+                                      size: 18, color: Colors.red[300]),
+                                  onPressed: () => setDialogState(
+                                      () => questions.removeAt(i))),
+                            ]),
+                      );
+                    }),
+                  ]),
             ),
           ),
           actions: [
@@ -1012,7 +1108,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 child: const Text("Cancel")),
             ElevatedButton.icon(
               icon: const Icon(Icons.publish_rounded, size: 18),
-              label: const Text("Publish Test"),
+              label:
+                  Text(scheduledDate != null ? "Schedule Test" : "Publish Now"),
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white),
@@ -1025,6 +1122,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                           "Please fill Title, Subject, and add at least 1 question.")));
                   return;
                 }
+                DateTime? scheduledDateTime;
+                if (scheduledDate != null) {
+                  final time =
+                      scheduledTime ?? const TimeOfDay(hour: 9, minute: 0);
+                  scheduledDateTime = DateTime(
+                      scheduledDate!.year,
+                      scheduledDate!.month,
+                      scheduledDate!.day,
+                      time.hour,
+                      time.minute);
+                }
                 await FirebaseFirestore.instance.collection('tests').add({
                   'class': selectedClass,
                   'schoolId': _teacherSchoolId,
@@ -1034,14 +1142,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   'duration': durationMins,
                   'questions': questions,
                   'createdAt': FieldValue.serverTimestamp(),
-                  'status': 'active',
+                  'status': scheduledDateTime != null ? 'scheduled' : 'active',
+                  if (scheduledDateTime != null)
+                    'scheduledAt': Timestamp.fromDate(scheduledDateTime),
                 });
                 if (context.mounted) Navigator.pop(context);
                 if (mounted) {
+                  final msg = scheduledDateTime != null
+                      ? "Test '${titleCtrl.text}' scheduled for ${DateFormat.yMMMd().add_jm().format(scheduledDateTime)}!"
+                      : "Test '${titleCtrl.text}' published for $selectedClass!";
                   ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
-                      content: Text(
-                          "Test '${titleCtrl.text}' published for $selectedClass!"),
-                      backgroundColor: Colors.deepPurple));
+                      content: Text(msg), backgroundColor: Colors.deepPurple));
                 }
               },
             ),
@@ -1055,7 +1166,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       BuildContext parentCtx, Function(Map<String, dynamic>) onAdd) {
     final qCtrl = TextEditingController();
     final optCtrls = List.generate(4, (_) => TextEditingController());
+    final answerCtrl = TextEditingController();
     int correctIdx = 0;
+    String questionType = 'mcq';
 
     showDialog(
       context: parentCtx,
@@ -1068,54 +1181,88 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               style: GoogleFonts.poppins(
                   fontSize: 15, fontWeight: FontWeight.bold)),
           content: SizedBox(
-            width: 400,
+            width: 420,
             child: SingleChildScrollView(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                      controller: qCtrl,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                          labelText: 'Question',
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10)))),
-                  const SizedBox(height: 12),
-                  ...List.generate(4, (i) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          Radio<int>(
-                            value: i,
-                            groupValue: correctIdx,
-                            activeColor: Colors.green,
-                            onChanged: (v) =>
-                                setDialogState(() => correctIdx = v ?? 0),
-                          ),
-                          Text("${String.fromCharCode(65 + i)}) ",
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
-                          Expanded(
-                            child: TextField(
-                                controller: optCtrls[i],
-                                decoration: InputDecoration(
-                                    hintText:
-                                        'Option ${String.fromCharCode(65 + i)}',
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 8),
-                                    border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8)))),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  Text("(Select the correct answer)",
-                      style: TextStyle(fontSize: 11, color: Colors.grey[500])),
-                ],
-              ),
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Text("Type: ",
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w500, fontSize: 13)),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                          label: const Text("MCQ"),
+                          selected: questionType == 'mcq',
+                          selectedColor: Colors.deepPurple.shade100,
+                          onSelected: (_) =>
+                              setDialogState(() => questionType = 'mcq')),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                          label: const Text("Short Answer"),
+                          selected: questionType == 'short',
+                          selectedColor: Colors.blue.shade100,
+                          onSelected: (_) =>
+                              setDialogState(() => questionType = 'short')),
+                    ]),
+                    const SizedBox(height: 12),
+                    TextField(
+                        controller: qCtrl,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                            labelText: 'Question',
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10)))),
+                    const SizedBox(height: 12),
+                    if (questionType == 'mcq') ...[
+                      ...List.generate(
+                          4,
+                          (i) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(children: [
+                                  Radio<int>(
+                                      value: i,
+                                      groupValue: correctIdx,
+                                      activeColor: Colors.green,
+                                      onChanged: (v) => setDialogState(
+                                          () => correctIdx = v ?? 0)),
+                                  Text("${String.fromCharCode(65 + i)}) ",
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  Expanded(
+                                      child: TextField(
+                                          controller: optCtrls[i],
+                                          decoration: InputDecoration(
+                                              hintText:
+                                                  'Option ${String.fromCharCode(65 + i)}',
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 8),
+                                              border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          8))))),
+                                ]),
+                              )),
+                      Text("(Select the correct answer)",
+                          style:
+                              TextStyle(fontSize: 11, color: Colors.grey[500])),
+                    ],
+                    if (questionType == 'short') ...[
+                      TextField(
+                          controller: answerCtrl,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                              labelText: 'Model Answer (optional)',
+                              hintText:
+                                  'Write the expected answer for reference',
+                              alignLabelWithHint: true,
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10)))),
+                    ],
+                  ]),
             ),
           ),
           actions: [
@@ -1124,16 +1271,29 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 child: const Text("Cancel")),
             ElevatedButton(
               onPressed: () {
-                if (qCtrl.text.isEmpty || optCtrls.any((c) => c.text.isEmpty)) {
+                if (qCtrl.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text("Fill the question and all 4 options.")));
+                      content: Text("Enter the question text.")));
                   return;
                 }
-                onAdd({
+                if (questionType == 'mcq' &&
+                    optCtrls.any((c) => c.text.isEmpty)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Fill all 4 MCQ options.")));
+                  return;
+                }
+                final questionData = <String, dynamic>{
                   'question': qCtrl.text.trim(),
-                  'options': optCtrls.map((c) => c.text.trim()).toList(),
-                  'correct': correctIdx,
-                });
+                  'type': questionType
+                };
+                if (questionType == 'mcq') {
+                  questionData['options'] =
+                      optCtrls.map((c) => c.text.trim()).toList();
+                  questionData['correct'] = correctIdx;
+                } else {
+                  questionData['modelAnswer'] = answerCtrl.text.trim();
+                }
+                onAdd(questionData);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
@@ -1256,90 +1416,226 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   OutlineInputBorder(borderRadius: BorderRadius.circular(12))));
 
   // ═══════════════════════════════════════════════════════════
-  // 📒 CREATE CHAPTER NOTES
+  // 📒 CREATE CHAPTER NOTES (Text + Image Upload)
   // ═══════════════════════════════════════════════════════════
   Future<void> _showCreateNotesDialog() async {
     if (_classes.isEmpty) return;
     final selectedClass = _classes[_selectedClassIndex];
-
     final subjectCtrl = TextEditingController();
     final chapterCtrl = TextEditingController();
     final contentCtrl = TextEditingController();
-
+    List<String> uploadedImageUrls = [];
+    bool isUploading = false;
     if (!mounted) return;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(children: [
-          const Icon(Icons.note_alt_rounded, color: Colors.blue),
-          const SizedBox(width: 10),
-          Text("Chapter Notes: $selectedClass",
-              style: GoogleFonts.poppins(
-                  fontSize: 15, fontWeight: FontWeight.bold)),
-        ]),
-        content: SizedBox(
-          width: 500,
-          height: 400,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                _styledField(subjectCtrl, 'Subject', Icons.book),
-                const SizedBox(height: 10),
-                _styledField(chapterCtrl, 'Chapter Title', Icons.bookmark),
-                const SizedBox(height: 10),
-                TextField(
-                    controller: contentCtrl,
-                    maxLines: 10,
-                    decoration: InputDecoration(
-                        labelText: 'Notes Content',
-                        alignLabelWithHint: true,
-                        prefixIcon: const Padding(
-                            padding: EdgeInsets.only(bottom: 160),
-                            child: Icon(Icons.edit_note, size: 18)),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)))),
-              ],
+      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(children: [
+            const Icon(Icons.note_alt_rounded, color: Colors.blue),
+            const SizedBox(width: 10),
+            Text("Chapter Notes: $selectedClass",
+                style: GoogleFonts.poppins(
+                    fontSize: 15, fontWeight: FontWeight.bold)),
+          ]),
+          content: SizedBox(
+            width: 500,
+            height: 480,
+            child: SingleChildScrollView(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _styledField(subjectCtrl, 'Subject', Icons.book),
+                    const SizedBox(height: 10),
+                    _styledField(chapterCtrl, 'Chapter Title', Icons.bookmark),
+                    const SizedBox(height: 10),
+                    TextField(
+                        controller: contentCtrl,
+                        maxLines: 5,
+                        decoration: InputDecoration(
+                            labelText: 'Notes Content (optional)',
+                            hintText: 'Type notes here, or upload images below',
+                            alignLabelWithHint: true,
+                            prefixIcon: const Padding(
+                                padding: EdgeInsets.only(bottom: 80),
+                                child: Icon(Icons.edit_note, size: 18)),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)))),
+                    const SizedBox(height: 14),
+                    Text("Upload Images",
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: Colors.blue)),
+                    const SizedBox(height: 4),
+                    Text(
+                        "Take photos of handwritten notes, worksheets, or slides",
+                        style:
+                            TextStyle(fontSize: 11, color: Colors.grey[500])),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.camera_alt_rounded, size: 16),
+                        label: const Text("Camera"),
+                        style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10))),
+                        onPressed: isUploading
+                            ? null
+                            : () async {
+                                final picker = ImagePicker();
+                                final XFile? photo = await picker.pickImage(
+                                    source: ImageSource.camera,
+                                    imageQuality: 80);
+                                if (photo == null) return;
+                                setDialogState(() => isUploading = true);
+                                final cloudinary = CloudinaryService();
+                                final url = await cloudinary
+                                    .uploadImage(File(photo.path));
+                                if (url != null)
+                                  setDialogState(
+                                      () => uploadedImageUrls.add(url));
+                                setDialogState(() => isUploading = false);
+                              },
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.photo_library_rounded, size: 16),
+                        label: const Text("Gallery"),
+                        style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10))),
+                        onPressed: isUploading
+                            ? null
+                            : () async {
+                                final picker = ImagePicker();
+                                final List<XFile> photos = await picker
+                                    .pickMultiImage(imageQuality: 80);
+                                if (photos.isEmpty) return;
+                                setDialogState(() => isUploading = true);
+                                final cloudinary = CloudinaryService();
+                                for (final photo in photos) {
+                                  final url = await cloudinary
+                                      .uploadImage(File(photo.path));
+                                  if (url != null)
+                                    setDialogState(
+                                        () => uploadedImageUrls.add(url));
+                                }
+                                setDialogState(() => isUploading = false);
+                              },
+                      ),
+                    ]),
+                    if (isUploading)
+                      const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Row(children: [
+                            SizedBox(
+                                width: 14,
+                                height: 14,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)),
+                            SizedBox(width: 8),
+                            Text("Uploading...", style: TextStyle(fontSize: 12))
+                          ])),
+                    if (uploadedImageUrls.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text("${uploadedImageUrls.length} image(s) attached",
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 60,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: uploadedImageUrls.length,
+                          itemBuilder: (_, i) => Stack(children: [
+                            Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: DecorationImage(
+                                      image: NetworkImage(uploadedImageUrls[i]),
+                                      fit: BoxFit.cover)),
+                            ),
+                            Positioned(
+                                top: -4,
+                                right: 0,
+                                child: GestureDetector(
+                                  onTap: () => setDialogState(
+                                      () => uploadedImageUrls.removeAt(i)),
+                                  child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle),
+                                      child: const Icon(Icons.close,
+                                          size: 12, color: Colors.white)),
+                                )),
+                          ]),
+                        ),
+                      ),
+                    ],
+                  ]),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel")),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.publish_rounded, size: 18),
-            label: const Text("Publish Notes"),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, foregroundColor: Colors.white),
-            onPressed: () async {
-              if (subjectCtrl.text.isEmpty || chapterCtrl.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text("Subject and Chapter Title are required.")));
-                return;
-              }
-              await FirebaseFirestore.instance.collection('notes').add({
-                'class': selectedClass,
-                'schoolId': _teacherSchoolId,
-                'teacherName': _teacherName,
-                'subject': subjectCtrl.text.trim(),
-                'chapter': chapterCtrl.text.trim(),
-                'content': contentCtrl.text.trim(),
-                'createdAt': FieldValue.serverTimestamp(),
-              });
-              if (context.mounted) Navigator.pop(context);
-              if (mounted) {
-                ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
-                    content: Text(
-                        "Notes for '${chapterCtrl.text}' published for $selectedClass!"),
-                    backgroundColor: Colors.blue));
-              }
-            },
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel")),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.publish_rounded, size: 18),
+              label: const Text("Publish Notes"),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue, foregroundColor: Colors.white),
+              onPressed: isUploading
+                  ? null
+                  : () async {
+                      if (subjectCtrl.text.isEmpty ||
+                          chapterCtrl.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    "Subject and Chapter Title are required.")));
+                        return;
+                      }
+                      if (contentCtrl.text.isEmpty &&
+                          uploadedImageUrls.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    "Add some notes text or upload images.")));
+                        return;
+                      }
+                      await FirebaseFirestore.instance.collection('notes').add({
+                        'class': selectedClass,
+                        'schoolId': _teacherSchoolId,
+                        'teacherName': _teacherName,
+                        'subject': subjectCtrl.text.trim(),
+                        'chapter': chapterCtrl.text.trim(),
+                        'content': contentCtrl.text.trim(),
+                        'images': uploadedImageUrls,
+                        'createdAt': FieldValue.serverTimestamp(),
+                      });
+                      if (context.mounted) Navigator.pop(context);
+                      if (mounted) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+                            content: Text(
+                                "Notes for '${chapterCtrl.text}' published for $selectedClass!"),
+                            backgroundColor: Colors.blue));
+                      }
+                    },
+            ),
+          ],
+        );
+      }),
     );
   }
 
@@ -1641,11 +1937,18 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                    color: Colors.green.shade50,
+                                    color: data['status'] == 'scheduled'
+                                        ? Colors.orange.shade50
+                                        : Colors.green.shade50,
                                     borderRadius: BorderRadius.circular(8)),
-                                child: Text("Active",
+                                child: Text(
+                                    data['status'] == 'scheduled'
+                                        ? "Scheduled"
+                                        : "Active",
                                     style: TextStyle(
-                                        color: Colors.green[700],
+                                        color: data['status'] == 'scheduled'
+                                            ? Colors.orange[700]
+                                            : Colors.green[700],
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold)),
                               ),
@@ -1839,7 +2142,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                                             fontWeight: FontWeight.w600,
                                             fontSize: 13)),
                                     Text(
-                                        "${data['subject'] ?? ''} • By ${data['teacherName'] ?? ''}",
+                                        "${data['subject'] ?? ''}${(data['images'] as List?)?.isNotEmpty == true ? ' • ${(data['images'] as List).length} 📷' : ''} • By ${data['teacherName'] ?? ''}",
                                         style: GoogleFonts.poppins(
                                             fontSize: 11,
                                             color: Colors.grey[600])),
