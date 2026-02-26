@@ -61,7 +61,6 @@ Move the robot.
 #### **Buzzer (Sound)**
 Play sounds or notes.
 *   **`BN<note>`**: Play Note (e.g., `A4`, `C5`, `F#4`) &rarr; `|BNA4|`
-*   **`BP<song>`**: Play RTTTL Song (e.g., `StarWars`) &rarr; `|BPStarWars|`
 *   **`BF<freq>`**: Play Frequency (Hz) &rarr; `|BF440|`
 *   **`BS`**: Stop Sound &rarr; `|BS|`
 
@@ -204,8 +203,7 @@ void setup() {
 
 **Buzzer:**
 
-- `|BN<note>|` -> `buzzerPlayNote("<note>");`
-- `|BP<song>|` -> `buzzerPlayRtttl("<song>");`
+- `|BN<note>|` and `|BP<note>|` -> `buzzerPlayNote("<note>");`
 - `|BF<freq>|` -> `ledcWriteTone(3, <freq>);`
 - `|BS|` -> `ledcWriteTone(3, 0); ledcWrite(3, 0);`
 
@@ -607,13 +605,3 @@ Copy and paste these directly into the Serial Monitor.
 - **Typo?** Unknown tokens are usually ignored, check Serial output (Debug mode) to see what's happening.
 
 `#$%` or `*&(` switches mode and responds `MODE:AUTO_BOTH`.
-`##C1` enables boot cloud sync and responds `CLOUDSYNC:ON`.
-`##C0` disables boot cloud sync and responds `CLOUDSYNC:OFF`.
-`C@*` enters credential mode (`CRED:WAITING`) and `C@*` again cancels (`CRED:CANCEL`).
-C@* flow with all responses:
-CRED:WAITING, CRED:CANCEL, CRED:TIMEOUT
-W@... -> CRED:SSID:...
-W*... -> CRED:PASS:OK
-B@... -> CRED:BUCKET:...
-S@... -> CRED:SERIAL:...
-final CRED:SAVED
