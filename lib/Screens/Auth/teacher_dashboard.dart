@@ -35,16 +35,47 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
   // 📢 BROADCAST STATE
   final TextEditingController _noticeTitleController = TextEditingController();
-  final TextEditingController _noticeMessageController = TextEditingController();
+  final TextEditingController _noticeMessageController =
+      TextEditingController();
   bool _isSendingNotice = false;
 
   final List<DashboardItem> _availableTools = [
-    DashboardItem(title: 'Little Emmi', subtitle: '', icon: Icons.child_care_outlined, accentColor: Colors.teal, onTap: () {}),
-    DashboardItem(title: 'Python IDE', subtitle: '', icon: Icons.code_outlined, accentColor: Colors.amber.shade700, onTap: () {}),
-    DashboardItem(title: 'Flowchart', subtitle: '', icon: Icons.account_tree_outlined, accentColor: Colors.orange, onTap: () {}),
-    DashboardItem(title: 'MIT App Inventor', subtitle: '', icon: Icons.extension_outlined, accentColor: Colors.green, onTap: () {}),
-    DashboardItem(title: 'Office Suite', subtitle: '', icon: Icons.grid_view_rounded, accentColor: Colors.indigo, onTap: () {}),
-    DashboardItem(title: 'Custom / Paper', subtitle: '', icon: Icons.edit_document, accentColor: Colors.pinkAccent, onTap: () {}),
+    DashboardItem(
+        title: 'Little Emmi',
+        subtitle: '',
+        icon: Icons.child_care_outlined,
+        accentColor: Colors.teal,
+        onTap: () {}),
+    DashboardItem(
+        title: 'Python IDE',
+        subtitle: '',
+        icon: Icons.code_outlined,
+        accentColor: Colors.amber.shade700,
+        onTap: () {}),
+    DashboardItem(
+        title: 'Flowchart',
+        subtitle: '',
+        icon: Icons.account_tree_outlined,
+        accentColor: Colors.orange,
+        onTap: () {}),
+    DashboardItem(
+        title: 'MIT App Inventor',
+        subtitle: '',
+        icon: Icons.extension_outlined,
+        accentColor: Colors.green,
+        onTap: () {}),
+    DashboardItem(
+        title: 'Office Suite',
+        subtitle: '',
+        icon: Icons.grid_view_rounded,
+        accentColor: Colors.indigo,
+        onTap: () {}),
+    DashboardItem(
+        title: 'Custom / Paper',
+        subtitle: '',
+        icon: Icons.edit_document,
+        accentColor: Colors.pinkAccent,
+        onTap: () {}),
   ];
 
   DashboardItem? _selectedToolForProject;
@@ -65,7 +96,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
         if (doc.exists) {
           Map<String, dynamic> data = doc.data()!;
           setState(() {
@@ -120,9 +154,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     try {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) setState(() => _selectedImageFile = File(pickedFile.path));
+      if (pickedFile != null)
+        setState(() => _selectedImageFile = File(pickedFile.path));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gallery Error: $e"), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Gallery Error: $e"), backgroundColor: Colors.red));
     }
   }
 
@@ -134,7 +170,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         title: Row(children: [
           const Icon(Icons.post_add_rounded, color: Colors.deepPurple),
           const SizedBox(width: 10),
-          Text("Assign ${item.title}?", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text("Assign ${item.title}?",
+              style: GoogleFonts.poppins(
+                  fontSize: 18, fontWeight: FontWeight.bold)),
         ]),
         content: Text(
           "Do you want to create a new task for students using '${item.title}'?",
@@ -143,12 +181,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text("Cancel", style: GoogleFonts.poppins(color: Colors.grey)),
+            child:
+                Text("Cancel", style: GoogleFonts.poppins(color: Colors.grey)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {
               setState(() => _selectedToolForProject = item);
@@ -160,7 +200,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ),
               );
             },
-            child: Text("Confirm", style: GoogleFonts.poppins(color: Colors.white)),
+            child: Text("Confirm",
+                style: GoogleFonts.poppins(color: Colors.white)),
           ),
         ],
       ),
@@ -169,8 +210,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
   // 📢 SEND BROADCAST FUNCTION
   Future<void> _sendBroadcast() async {
-    if (_noticeTitleController.text.isEmpty || _noticeMessageController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill in Title and Message!")));
+    if (_noticeTitleController.text.isEmpty ||
+        _noticeMessageController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please fill in Title and Message!")));
       return;
     }
 
@@ -189,8 +232,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text("Notice sent to ${_classes[_selectedClassIndex]}!"),
-            backgroundColor: Colors.orangeAccent
-        ));
+            backgroundColor: Colors.orangeAccent));
         setState(() {
           _noticeTitleController.clear();
           _noticeMessageController.clear();
@@ -200,14 +242,18 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSendingNotice = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
       }
     }
   }
 
   Future<void> _createProject() async {
-    if (_projectTitleController.text.isEmpty || _selectedToolForProject == null || _selectedDueDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill in Title, Tool, and Due Date!")));
+    if (_projectTitleController.text.isEmpty ||
+        _selectedToolForProject == null ||
+        _selectedDueDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Please fill in Title, Tool, and Due Date!")));
       return;
     }
     setState(() => _isUploading = true);
@@ -227,12 +273,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         'createdAt': FieldValue.serverTimestamp(),
         'teacherName': _teacherName,
         'hintType': _hintType,
-        'hintContent': _hintType == 'text' ? _hintTextController.text.trim() : (imageUrl ?? ''),
+        'hintContent': _hintType == 'text'
+            ? _hintTextController.text.trim()
+            : (imageUrl ?? ''),
         'status': 'active',
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Assignment uploaded for ${_classes[_selectedClassIndex]}!"), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                "Assignment uploaded for ${_classes[_selectedClassIndex]}!"),
+            backgroundColor: Colors.green));
         setState(() {
           _projectTitleController.clear();
           _projectDescController.clear();
@@ -247,15 +298,583 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isUploading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
       }
     }
   }
 
+  // --- 📋 MARK ATTENDANCE ---
+  Future<void> _showMarkAttendanceDialog() async {
+    if (_classes.isEmpty) return;
+    final selectedClass = _classes[_selectedClassIndex];
+
+    // Fetch students for this class
+    final studentsSnap = await FirebaseFirestore.instance
+        .collection('users')
+        .where('role', isEqualTo: 'student')
+        .where('class', isEqualTo: selectedClass)
+        .get();
+
+    if (studentsSnap.docs.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("No students found in this class.")));
+      }
+      return;
+    }
+
+    // Build attendance map: studentId -> true (present by default)
+    Map<String, bool> attendance = {};
+    Map<String, String> studentNames = {};
+    for (var doc in studentsSnap.docs) {
+      attendance[doc.id] = true;
+      studentNames[doc.id] = doc.data()['name'] ?? 'Unknown';
+    }
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(children: [
+            const Icon(Icons.fact_check_rounded, color: Colors.indigo),
+            const SizedBox(width: 10),
+            Text("Attendance: $selectedClass",
+                style: GoogleFonts.poppins(
+                    fontSize: 16, fontWeight: FontWeight.bold)),
+          ]),
+          content: SizedBox(
+            width: 400,
+            height: 400,
+            child: Column(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                      color: Colors.indigo.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                          "${DateFormat.yMMMd().format(DateTime.now())} • ${attendance.values.where((v) => v).length}/${attendance.length} Present",
+                          style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.indigo[800])),
+                      TextButton(
+                        onPressed: () {
+                          setDialogState(() {
+                            bool allPresent = attendance.values.every((v) => v);
+                            attendance.updateAll((k, v) => !allPresent);
+                          });
+                        },
+                        child: Text(
+                            attendance.values.every((v) => v)
+                                ? "Mark All Absent"
+                                : "Mark All Present",
+                            style: const TextStyle(fontSize: 11)),
+                      )
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView(
+                    children: attendance.entries.map((entry) {
+                      final name = studentNames[entry.key] ?? entry.key;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                            color: entry.value
+                                ? Colors.green.withOpacity(0.05)
+                                : Colors.red.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: entry.value
+                                    ? Colors.green.shade200
+                                    : Colors.red.shade200)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(children: [
+                              CircleAvatar(
+                                backgroundColor: entry.value
+                                    ? Colors.green.shade100
+                                    : Colors.red.shade100,
+                                radius: 16,
+                                child: Text(
+                                    name.isNotEmpty
+                                        ? name[0].toUpperCase()
+                                        : '?',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: entry.value
+                                            ? Colors.green[800]
+                                            : Colors.red[800])),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(name,
+                                  style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w500)),
+                            ]),
+                            Switch(
+                              value: entry.value,
+                              activeColor: Colors.green,
+                              inactiveThumbColor: Colors.red,
+                              onChanged: (val) {
+                                setDialogState(
+                                    () => attendance[entry.key] = val);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel")),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.save_rounded, size: 18),
+              label: const Text("Save Attendance"),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  foregroundColor: Colors.white),
+              onPressed: () async {
+                // Upsert: check if a record already exists for today
+                final today = DateTime.now();
+                final dayStart = DateTime(today.year, today.month, today.day);
+                final dayEnd = dayStart.add(const Duration(days: 1));
+
+                final existingSnap = await FirebaseFirestore.instance
+                    .collection('attendance')
+                    .where('class', isEqualTo: selectedClass)
+                    .where('date',
+                        isGreaterThanOrEqualTo: Timestamp.fromDate(dayStart))
+                    .where('date', isLessThan: Timestamp.fromDate(dayEnd))
+                    .limit(1)
+                    .get();
+
+                if (existingSnap.docs.isNotEmpty) {
+                  // Update existing record
+                  await existingSnap.docs.first.reference.update({
+                    'records': attendance,
+                    'teacher': _teacherName,
+                    'date': Timestamp.fromDate(DateTime.now()),
+                  });
+                } else {
+                  // Create new record
+                  await FirebaseFirestore.instance
+                      .collection('attendance')
+                      .add({
+                    'class': selectedClass,
+                    'schoolId': _teacherSchoolId,
+                    'teacher': _teacherName,
+                    'date': Timestamp.fromDate(DateTime.now()),
+                    'records': attendance,
+                  });
+                }
+                if (context.mounted) Navigator.pop(context);
+                if (mounted) {
+                  ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+                      content: Text(
+                          "Attendance saved for $selectedClass! (${attendance.values.where((v) => v).length}/${attendance.length} Present)"),
+                      backgroundColor: Colors.green));
+                }
+              },
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  // --- 📅 VIEW TIMETABLE ---
+  Future<void> _showTimetableDialog() async {
+    if (_classes.isEmpty) return;
+    final selectedClass = _classes[_selectedClassIndex];
+
+    // Fetch class doc that contains the timetable
+    final classSnap = await FirebaseFirestore.instance
+        .collection('classes')
+        .where('className', isEqualTo: selectedClass)
+        .where('schoolId', isEqualTo: _teacherSchoolId)
+        .limit(1)
+        .get();
+
+    if (!mounted) return;
+
+    if (classSnap.docs.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content:
+              Text("No timetable found. Ask your Admin to generate one.")));
+      return;
+    }
+
+    final classData = classSnap.docs.first.data();
+    final timetable = classData['timetable'] as Map<String, dynamic>?;
+    final config = (classData['timetableConfig'] as List<dynamic>?) ?? [];
+
+    if (timetable == null || timetable.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("No timetable generated yet for this class.")));
+      return;
+    }
+
+    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(children: [
+          const Icon(Icons.calendar_month_rounded, color: Colors.teal),
+          const SizedBox(width: 10),
+          Text("Timetable: $selectedClass",
+              style: GoogleFonts.poppins(
+                  fontSize: 16, fontWeight: FontWeight.bold)),
+        ]),
+        content: SizedBox(
+          width: 500,
+          height: 450,
+          child: DefaultTabController(
+            length: days.length,
+            child: Column(
+              children: [
+                TabBar(
+                  isScrollable: true,
+                  labelColor: Colors.teal,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.teal,
+                  labelStyle: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600, fontSize: 13),
+                  tabs: days.map((d) => Tab(text: d)).toList(),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: TabBarView(
+                    children: days.map((day) {
+                      final daySlots = timetable[day] as List<dynamic>? ?? [];
+                      if (daySlots.isEmpty) {
+                        return Center(
+                            child: Text("No classes on $day",
+                                style:
+                                    GoogleFonts.poppins(color: Colors.grey)));
+                      }
+                      return ListView.builder(
+                        itemCount: daySlots.length,
+                        itemBuilder: (context, index) {
+                          // Slots are strings like "Hindi", "Math", "Free", "Lunch Break"
+                          final subject = daySlots[index].toString();
+                          final isFree =
+                              subject == 'Free' || subject == 'Lunch Break';
+
+                          // Get time from config if available
+                          String timeLabel = '';
+                          if (index < config.length) {
+                            final slotConfig =
+                                config[index] as Map<String, dynamic>;
+                            timeLabel = slotConfig['label'] ?? '';
+                          }
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: isFree
+                                  ? Colors.orange.withOpacity(0.08)
+                                  : Colors.teal.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                  color: isFree
+                                      ? Colors.orange.shade200
+                                      : Colors.teal.shade200),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(children: [
+                                  Icon(
+                                      isFree
+                                          ? Icons.free_breakfast_rounded
+                                          : Icons.menu_book_rounded,
+                                      color:
+                                          isFree ? Colors.orange : Colors.teal,
+                                      size: 20),
+                                  const SizedBox(width: 12),
+                                  Text(subject,
+                                      style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14)),
+                                ]),
+                                if (timeLabel.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                        color: Colors.blueGrey.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8)),
+                                    child: Text(timeLabel,
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.blueGrey[700])),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close")),
+        ],
+      ),
+    );
+  }
+
+  // --- 📆 VIEW ATTENDANCE HISTORY (Calendar) ---
+  Future<void> _showAttendanceCalendarDialog() async {
+    if (_classes.isEmpty) return;
+    final selectedClass = _classes[_selectedClassIndex];
+
+    // Step 1: Pick a date
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2024),
+      lastDate: DateTime.now(),
+      helpText: 'Select date to view attendance',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.indigo,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate == null || !mounted) return;
+
+    // Step 2: Query Firestore for that date's records
+    final dayStart =
+        DateTime(pickedDate.year, pickedDate.month, pickedDate.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+
+    final attendanceSnap = await FirebaseFirestore.instance
+        .collection('attendance')
+        .where('class', isEqualTo: selectedClass)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(dayStart))
+        .where('date', isLessThan: Timestamp.fromDate(dayEnd))
+        .get();
+
+    if (!mounted) return;
+
+    if (attendanceSnap.docs.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              "No attendance recorded for $selectedClass on ${DateFormat.yMMMd().format(pickedDate)}")));
+      return;
+    }
+
+    // Use the latest record if multiple exist for the same day
+    final recordData = attendanceSnap.docs.first.data();
+    final records = (recordData['records'] as Map<String, dynamic>?) ?? {};
+    final teacher = recordData['teacher'] ?? 'Unknown';
+
+    // Fetch student names
+    final studentIds = records.keys.toList();
+    Map<String, String> studentNames = {};
+    if (studentIds.isNotEmpty) {
+      final usersSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .where(FieldPath.documentId, whereIn: studentIds)
+          .get();
+      for (var doc in usersSnap.docs) {
+        studentNames[doc.id] = doc.data()['name'] ?? 'Unknown';
+      }
+    }
+
+    if (!mounted) return;
+
+    final presentCount = records.values.where((v) => v == true).length;
+    final absentCount = records.length - presentCount;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.calendar_today_rounded, color: Colors.indigo),
+              const SizedBox(width: 10),
+              Text("Attendance: $selectedClass",
+                  style: GoogleFonts.poppins(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+            ]),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                  color: Colors.indigo.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(DateFormat.yMMMMd().format(pickedDate),
+                      style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.indigo[800])),
+                  Text("By: $teacher",
+                      style: GoogleFonts.poppins(
+                          fontSize: 11, color: Colors.grey[600])),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Text("✅ Present: $presentCount",
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green[800])),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Text("❌ Absent: $absentCount",
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red[800])),
+                ),
+              ],
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 400,
+          height: 350,
+          child: ListView(
+            children: records.entries.map((entry) {
+              final name = studentNames[entry.key] ?? 'ID: ${entry.key}';
+              final isPresent = entry.value == true;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isPresent
+                      ? Colors.green.withOpacity(0.05)
+                      : Colors.red.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: isPresent
+                          ? Colors.green.shade200
+                          : Colors.red.shade200),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(children: [
+                      CircleAvatar(
+                        backgroundColor: isPresent
+                            ? Colors.green.shade100
+                            : Colors.red.shade100,
+                        radius: 16,
+                        child: Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : '?',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isPresent
+                                    ? Colors.green[800]
+                                    : Colors.red[800])),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(name,
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w500, fontSize: 14)),
+                    ]),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                          color: isPresent
+                              ? Colors.green.shade100
+                              : Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Text(isPresent ? "Present" : "Absent",
+                          style: TextStyle(
+                              color: isPresent
+                                  ? Colors.green[800]
+                                  : Colors.red[800],
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close")),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_isLoadingClasses) return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    if (_classes.isEmpty) return const Scaffold(body: Center(child: Text("No classes assigned.")));
+    if (_isLoadingClasses)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_classes.isEmpty)
+      return const Scaffold(body: Center(child: Text("No classes assigned.")));
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -280,19 +899,183 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   SizedBox(
                     height: 50,
                     child: ListView.separated(
-                      scrollDirection: Axis.horizontal, itemCount: _classes.length, separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _classes.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
                       itemBuilder: (context, index) {
                         final isSelected = index == _selectedClassIndex;
                         return GestureDetector(
-                          onTap: () => setState(() => _selectedClassIndex = index),
-                          child: AnimatedContainer(duration: const Duration(milliseconds: 200), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), decoration: BoxDecoration(color: isSelected ? Colors.indigoAccent : Colors.white, borderRadius: BorderRadius.circular(25), border: Border.all(color: isSelected ? Colors.indigoAccent : Colors.grey.shade300)), child: Text(_classes[index], style: GoogleFonts.poppins(color: isSelected ? Colors.white : Colors.blueGrey[700], fontWeight: FontWeight.w600))),
+                          onTap: () =>
+                              setState(() => _selectedClassIndex = index),
+                          child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? Colors.indigoAccent
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(25),
+                                  border: Border.all(
+                                      color: isSelected
+                                          ? Colors.indigoAccent
+                                          : Colors.grey.shade300)),
+                              child: Text(_classes[index],
+                                  style: GoogleFonts.poppins(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.blueGrey[700],
+                                      fontWeight: FontWeight.w600))),
                         );
                       },
                     ),
                   ),
 
+                  const SizedBox(height: 16),
+                  // --- 🆕 ACTION BUTTONS: ATTENDANCE + TIMETABLE ---
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _showMarkAttendanceDialog,
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.green.shade200),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.green.withOpacity(0.08),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4))
+                              ],
+                            ),
+                            child: Row(children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                    color: Colors.green.shade50,
+                                    shape: BoxShape.circle),
+                                child: Icon(Icons.fact_check_rounded,
+                                    color: Colors.green.shade700, size: 22),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Mark Attendance",
+                                      style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13)),
+                                  Text("Today's roll call",
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 11,
+                                          color: Colors.grey[500])),
+                                ],
+                              ),
+                            ]),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _showTimetableDialog,
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.teal.shade200),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.teal.withOpacity(0.08),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4))
+                              ],
+                            ),
+                            child: Row(children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                    color: Colors.teal.shade50,
+                                    shape: BoxShape.circle),
+                                child: Icon(Icons.calendar_month_rounded,
+                                    color: Colors.teal.shade700, size: 22),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("View Timetable",
+                                      style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13)),
+                                  Text("Weekly schedule",
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 11,
+                                          color: Colors.grey[500])),
+                                ],
+                              ),
+                            ]),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+                  // --- 🆕 VIEW ATTENDANCE HISTORY BUTTON ---
+                  GestureDetector(
+                    onTap: _showAttendanceCalendarDialog,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.purple.shade200),
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.purple.withOpacity(0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4))
+                        ],
+                      ),
+                      child: Row(children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                              color: Colors.purple.shade50,
+                              shape: BoxShape.circle),
+                          child: Icon(Icons.calendar_today_rounded,
+                              color: Colors.purple.shade700, size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Attendance History",
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold, fontSize: 13)),
+                            Text("Pick a date to view past records",
+                                style: GoogleFonts.poppins(
+                                    fontSize: 11, color: Colors.grey[500])),
+                          ],
+                        ),
+                        const Spacer(),
+                        Icon(Icons.arrow_forward_ios_rounded,
+                            size: 14, color: Colors.grey[400]),
+                      ]),
+                    ),
+                  ),
+
                   const SizedBox(height: 30),
-                  Text("Create Assignment", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
+                  Text("Create Assignment",
+                      style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueGrey[900])),
                   const SizedBox(height: 16),
 
                   SizedBox(
@@ -307,10 +1090,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             color: Colors.transparent,
                             child: Opacity(
                               opacity: 0.7,
-                              child: _buildToolChip(_availableTools[index], isDragging: true),
+                              child: _buildToolChip(_availableTools[index],
+                                  isDragging: true),
                             ),
                           ),
-                          childWhenDragging: Opacity(opacity: 0.3, child: _buildToolChip(_availableTools[index])),
+                          childWhenDragging: Opacity(
+                              opacity: 0.3,
+                              child: _buildToolChip(_availableTools[index])),
                           child: _buildToolChip(_availableTools[index]),
                         );
                       },
@@ -323,12 +1109,20 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   const SizedBox(height: 30),
 
                   // 📢 NEW: BROADCAST SECTION
-                  Text("Class Announcement", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
+                  Text("Class Announcement",
+                      style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueGrey[900])),
                   const SizedBox(height: 16),
                   _buildBroadcastCard(),
 
                   const SizedBox(height: 40),
-                  Text("Recent Uploads", style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueGrey[900])),
+                  Text("Recent Uploads",
+                      style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blueGrey[900])),
                   const SizedBox(height: 16),
                   _buildAssignmentList(),
                 ],
@@ -349,22 +1143,32 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         color: const Color(0xFFFFF8E1), // Light Amber
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1),
-        boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.1), blurRadius: 20)],
+        boxShadow: [
+          BoxShadow(color: Colors.orange.withOpacity(0.1), blurRadius: 20)
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.campaign_rounded, color: Colors.orange, size: 28),
+              const Icon(Icons.campaign_rounded,
+                  color: Colors.orange, size: 28),
               const SizedBox(width: 10),
-              Text("Send Notice to ${_classes[_selectedClassIndex]}", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.brown[800])),
+              Text("Send Notice to ${_classes[_selectedClassIndex]}",
+                  style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown[800])),
             ],
           ),
           const SizedBox(height: 16),
-          _buildStyledTextField(_noticeTitleController, "Subject (e.g., Exam Postponed)", Icons.title),
+          _buildStyledTextField(_noticeTitleController,
+              "Subject (e.g., Exam Postponed)", Icons.title),
           const SizedBox(height: 12),
-          _buildStyledTextField(_noticeMessageController, "Type your message here...", Icons.message_outlined, maxLines: 3),
+          _buildStyledTextField(_noticeMessageController,
+              "Type your message here...", Icons.message_outlined,
+              maxLines: 3),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -374,13 +1178,18 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0
-              ),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  elevation: 0),
               icon: _isSendingNotice
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
                   : const Icon(Icons.send_rounded, size: 18),
-              label: Text("Broadcast Notice", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+              label: Text("Broadcast Notice",
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
             ),
           )
         ],
@@ -396,14 +1205,25 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: item.accentColor.withOpacity(0.5)),
-        boxShadow: isDragging ? [] : [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))],
+        boxShadow: isDragging
+            ? []
+            : [
+                BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2))
+              ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(item.icon, color: item.accentColor, size: 20),
           const SizedBox(width: 8),
-          Text(item.title, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blueGrey[800])),
+          Text(item.title,
+              style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blueGrey[800])),
         ],
       ),
     );
@@ -416,16 +1236,25 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         color: Colors.white.withOpacity(0.95),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20)
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStyledTextField(_projectTitleController, "Project Title", Icons.title),
+          _buildStyledTextField(
+              _projectTitleController, "Project Title", Icons.title),
           const SizedBox(height: 12),
-          _buildStyledTextField(_projectDescController, "Instructions...", Icons.description, maxLines: 3),
+          _buildStyledTextField(
+              _projectDescController, "Instructions...", Icons.description,
+              maxLines: 3),
           const SizedBox(height: 20),
-          Text("Required Tool (Drag & Drop here)", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600])),
+          Text("Required Tool (Drag & Drop here)",
+              style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[600])),
           const SizedBox(height: 8),
           DragTarget<DashboardItem>(
             onAcceptWithDetails: (details) {
@@ -436,7 +1265,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               return DottedBorder(
                 borderType: BorderType.RRect,
                 radius: const Radius.circular(12),
-                color: isHovered ? Colors.indigoAccent : (_selectedToolForProject != null ? _selectedToolForProject!.accentColor : Colors.grey.shade400),
+                color: isHovered
+                    ? Colors.indigoAccent
+                    : (_selectedToolForProject != null
+                        ? _selectedToolForProject!.accentColor
+                        : Colors.grey.shade400),
                 strokeWidth: 2,
                 dashPattern: const [6, 3],
                 child: Container(
@@ -444,28 +1277,46 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   height: 60,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: isHovered ? Colors.indigo.withOpacity(0.05) : (_selectedToolForProject != null ? _selectedToolForProject!.accentColor.withOpacity(0.1) : Colors.transparent),
+                    color: isHovered
+                        ? Colors.indigo.withOpacity(0.05)
+                        : (_selectedToolForProject != null
+                            ? _selectedToolForProject!.accentColor
+                                .withOpacity(0.1)
+                            : Colors.transparent),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: _selectedToolForProject != null
                       ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(_selectedToolForProject!.icon, color: _selectedToolForProject!.accentColor),
-                      const SizedBox(width: 8),
-                      Text(_selectedToolForProject!.title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: _selectedToolForProject!.accentColor)),
-                      const SizedBox(width: 8),
-                      IconButton(icon: const Icon(Icons.close, size: 16), onPressed: () => setState(() => _selectedToolForProject = null))
-                    ],
-                  )
-                      : Text("Drop Tool Here", style: GoogleFonts.poppins(color: Colors.grey[500], fontSize: 13)),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(_selectedToolForProject!.icon,
+                                color: _selectedToolForProject!.accentColor),
+                            const SizedBox(width: 8),
+                            Text(_selectedToolForProject!.title,
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        _selectedToolForProject!.accentColor)),
+                            const SizedBox(width: 8),
+                            IconButton(
+                                icon: const Icon(Icons.close, size: 16),
+                                onPressed: () => setState(
+                                    () => _selectedToolForProject = null))
+                          ],
+                        )
+                      : Text("Drop Tool Here",
+                          style: GoogleFonts.poppins(
+                              color: Colors.grey[500], fontSize: 13)),
                 ),
               );
             },
           ),
-
           const SizedBox(height: 20),
-          Text("Add Hint (Optional)", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600])),
+          Text("Add Hint (Optional)",
+              style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[600])),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -478,7 +1329,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           ),
           const SizedBox(height: 12),
           if (_hintType == 'text')
-            _buildStyledTextField(_hintTextController, "Enter hint text...", Icons.lightbulb_outline),
+            _buildStyledTextField(_hintTextController, "Enter hint text...",
+                Icons.lightbulb_outline),
           if (_hintType == 'image')
             GestureDetector(
               onTap: _pickImage,
@@ -490,17 +1342,29 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade300),
                     image: _selectedImageFile != null
-                        ? DecorationImage(image: FileImage(_selectedImageFile!), fit: BoxFit.cover)
-                        : null
-                ),
+                        ? DecorationImage(
+                            image: FileImage(_selectedImageFile!),
+                            fit: BoxFit.cover)
+                        : null),
                 child: _selectedImageFile == null
-                    ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.add_photo_alternate, color: Colors.grey), Text("Tap to upload image", style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey))])
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                            const Icon(Icons.add_photo_alternate,
+                                color: Colors.grey),
+                            Text("Tap to upload image",
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: Colors.grey))
+                          ])
                     : null,
               ),
             ),
-
           const SizedBox(height: 20),
-          Text("Deadline", style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600])),
+          Text("Deadline",
+              style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[600])),
           const SizedBox(height: 8),
           InkWell(
             onTap: _pickDateTime,
@@ -508,35 +1372,62 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                  color: _selectedDueDate != null ? Colors.indigoAccent.withOpacity(0.1) : Colors.grey[50],
+                  color: _selectedDueDate != null
+                      ? Colors.indigoAccent.withOpacity(0.1)
+                      : Colors.grey[50],
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _selectedDueDate != null ? Colors.indigoAccent : Colors.grey.shade300)
-              ),
+                  border: Border.all(
+                      color: _selectedDueDate != null
+                          ? Colors.indigoAccent
+                          : Colors.grey.shade300)),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_today_rounded, size: 18, color: _selectedDueDate != null ? Colors.indigoAccent : Colors.grey),
+                  Icon(Icons.calendar_today_rounded,
+                      size: 18,
+                      color: _selectedDueDate != null
+                          ? Colors.indigoAccent
+                          : Colors.grey),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _selectedDueDate == null ? "Select Date & Time" : DateFormat('MMM dd • HH:mm').format(_selectedDueDate!),
-                      style: GoogleFonts.poppins(color: _selectedDueDate != null ? Colors.indigo[900] : Colors.grey[600], fontWeight: FontWeight.w600, fontSize: 13),
+                      _selectedDueDate == null
+                          ? "Select Date & Time"
+                          : DateFormat('MMM dd • HH:mm')
+                              .format(_selectedDueDate!),
+                      style: GoogleFonts.poppins(
+                          color: _selectedDueDate != null
+                              ? Colors.indigo[900]
+                              : Colors.grey[600],
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             height: 50,
             child: ElevatedButton(
               onPressed: (_isUploading) ? null : _createProject,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigoAccent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.indigoAccent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12))),
               child: _isUploading
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : Text("Assign to ${_classes.isNotEmpty ? _classes[_selectedClassIndex] : 'Class'}", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : Text(
+                      "Assign to ${_classes.isNotEmpty ? _classes[_selectedClassIndex] : 'Class'}",
+                      style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16)),
             ),
           ),
         ],
@@ -553,26 +1444,40 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         decoration: BoxDecoration(
           color: isSelected ? Colors.indigo : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? Colors.indigo : Colors.grey.shade300),
+          border: Border.all(
+              color: isSelected ? Colors.indigo : Colors.grey.shade300),
         ),
-        child: Text(label, style: GoogleFonts.poppins(fontSize: 11, color: isSelected ? Colors.white : Colors.grey[600], fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
+        child: Text(label,
+            style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: isSelected ? Colors.white : Colors.grey[600],
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
       ),
     );
   }
 
   Widget _buildAssignmentList() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('assignments').where('className', isEqualTo: _classes.isNotEmpty ? _classes[_selectedClassIndex] : '').orderBy('createdAt', descending: true).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('assignments')
+          .where('className',
+              isEqualTo:
+                  _classes.isNotEmpty ? _classes[_selectedClassIndex] : '')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox.shrink();
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+          return const SizedBox.shrink();
         return ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
-              final data = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+              final data =
+                  snapshot.data!.docs[index].data() as Map<String, dynamic>;
               DateTime due = DateTime.now();
-              if (data['dueDate'] != null && data['dueDate'] is Timestamp) due = (data['dueDate'] as Timestamp).toDate();
+              if (data['dueDate'] != null && data['dueDate'] is Timestamp)
+                due = (data['dueDate'] as Timestamp).toDate();
               return _buildProjectListTile({
                 'title': data['title'] ?? 'Untitled',
                 'tool': data['tool'] ?? 'Unknown',
@@ -587,27 +1492,54 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     return Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.shade200)),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200)),
         child: Row(children: [
           const Icon(Icons.assignment),
           const SizedBox(width: 16),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(project['title']), Text("Due: ${DateFormat('MMM dd').format(project['due'])}", style: const TextStyle(fontSize: 12))]))
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(project['title']),
+                Text("Due: ${DateFormat('MMM dd').format(project['due'])}",
+                    style: const TextStyle(fontSize: 12))
+              ]))
         ]));
   }
 
-  Widget _buildStyledTextField(TextEditingController controller, String hint, IconData icon, {int maxLines = 1}) => TextField(controller: controller, maxLines: maxLines, decoration: InputDecoration(hintText: hint, prefixIcon: Icon(icon, size: 20, color: Colors.grey[400]), filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200))));
+  Widget _buildStyledTextField(
+          TextEditingController controller, String hint, IconData icon,
+          {int maxLines = 1}) =>
+      TextField(
+          controller: controller,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+              hintText: hint,
+              prefixIcon: Icon(icon, size: 20, color: Colors.grey[400]),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200))));
 
   // ✅ FIXED HEADER AND LOGOUT
-  Widget _buildHeader(BuildContext context) => Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Teacher Portal", style: GoogleFonts.poppins(fontSize: 14, color: Colors.blueGrey[500], fontWeight: FontWeight.w600)),
-              Text("Welcome, $_teacherName", style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blueGrey[900]))
-            ]
-        ),
+  Widget _buildHeader(BuildContext context) =>
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text("Teacher Portal",
+              style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.blueGrey[500],
+                  fontWeight: FontWeight.w600)),
+          Text("Welcome, $_teacherName",
+              style: GoogleFonts.poppins(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueGrey[900]))
+        ]),
         IconButton(
             icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
             onPressed: () async {
@@ -619,13 +1551,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               // 2. Clear history and go to Login Screen
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => const LittleEmmiLoginScreen()),
-                    (route) => false,
+                MaterialPageRoute(
+                    builder: (context) => const LittleEmmiLoginScreen()),
+                (route) => false,
               );
-            }
-        )
-      ]
-  );
+            })
+      ]);
 }
 
-class _TeacherBackground extends StatelessWidget { const _TeacherBackground(); @override Widget build(BuildContext context) => Container(color: const Color(0xFFF8FAFC)); }
+class _TeacherBackground extends StatelessWidget {
+  const _TeacherBackground();
+  @override
+  Widget build(BuildContext context) =>
+      Container(color: const Color(0xFFF8FAFC));
+}
