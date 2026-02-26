@@ -869,6 +869,480 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // 📝 CREATE TEST (MCQ Quiz Builder)
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _showCreateTestDialog() async {
+    if (_classes.isEmpty) return;
+    final selectedClass = _classes[_selectedClassIndex];
+
+    final titleCtrl = TextEditingController();
+    final subjectCtrl = TextEditingController();
+    int durationMins = 15;
+    List<Map<String, dynamic>> questions = [];
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(children: [
+            const Icon(Icons.quiz_rounded, color: Colors.deepPurple),
+            const SizedBox(width: 10),
+            Text("Create Test: $selectedClass",
+                style: GoogleFonts.poppins(
+                    fontSize: 15, fontWeight: FontWeight.bold)),
+          ]),
+          content: SizedBox(
+            width: 500,
+            height: 500,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                      controller: subjectCtrl,
+                      decoration: InputDecoration(
+                          labelText: 'Subject',
+                          prefixIcon: const Icon(Icons.book, size: 18),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)))),
+                  const SizedBox(height: 10),
+                  TextField(
+                      controller: titleCtrl,
+                      decoration: InputDecoration(
+                          labelText: 'Test Title',
+                          prefixIcon: const Icon(Icons.title_rounded, size: 18),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)))),
+                  const SizedBox(height: 10),
+                  Row(children: [
+                    Text("Duration: ",
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w500, fontSize: 13)),
+                    DropdownButton<int>(
+                      value: durationMins,
+                      items: [5, 10, 15, 20, 30, 45, 60]
+                          .map((m) =>
+                              DropdownMenuItem(value: m, child: Text("$m min")))
+                          .toList(),
+                      onChanged: (v) =>
+                          setDialogState(() => durationMins = v ?? 15),
+                    ),
+                  ]),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Questions (${questions.length})",
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold, fontSize: 14)),
+                      TextButton.icon(
+                        icon: const Icon(Icons.add_circle_outline, size: 18),
+                        label: const Text("Add Question"),
+                        onPressed: () {
+                          _showAddQuestionDialog(context, (q) {
+                            setDialogState(() => questions.add(q));
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  ...questions.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final q = entry.value;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          color: Colors.deepPurple.withOpacity(0.04),
+                          borderRadius: BorderRadius.circular(10),
+                          border:
+                              Border.all(color: Colors.deepPurple.shade100)),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Q${i + 1}: ${q['question']}",
+                                    style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12)),
+                                const SizedBox(height: 4),
+                                ...List.generate(4, (oi) {
+                                  final options = q['options'] as List<String>;
+                                  final isCorrect = q['correct'] == oi;
+                                  return Text(
+                                      "${String.fromCharCode(65 + oi)}) ${options[oi]}",
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: isCorrect
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                          color: isCorrect
+                                              ? Colors.green[700]
+                                              : Colors.grey[700]));
+                                }),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete_outline,
+                                size: 18, color: Colors.red[300]),
+                            onPressed: () =>
+                                setDialogState(() => questions.removeAt(i)),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel")),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.publish_rounded, size: 18),
+              label: const Text("Publish Test"),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white),
+              onPressed: () async {
+                if (titleCtrl.text.isEmpty ||
+                    subjectCtrl.text.isEmpty ||
+                    questions.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text(
+                          "Please fill Title, Subject, and add at least 1 question.")));
+                  return;
+                }
+                await FirebaseFirestore.instance.collection('tests').add({
+                  'class': selectedClass,
+                  'schoolId': _teacherSchoolId,
+                  'teacherName': _teacherName,
+                  'subject': subjectCtrl.text.trim(),
+                  'title': titleCtrl.text.trim(),
+                  'duration': durationMins,
+                  'questions': questions,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'status': 'active',
+                });
+                if (context.mounted) Navigator.pop(context);
+                if (mounted) {
+                  ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+                      content: Text(
+                          "Test '${titleCtrl.text}' published for $selectedClass!"),
+                      backgroundColor: Colors.deepPurple));
+                }
+              },
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  void _showAddQuestionDialog(
+      BuildContext parentCtx, Function(Map<String, dynamic>) onAdd) {
+    final qCtrl = TextEditingController();
+    final optCtrls = List.generate(4, (_) => TextEditingController());
+    int correctIdx = 0;
+
+    showDialog(
+      context: parentCtx,
+      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text("Add Question",
+              style: GoogleFonts.poppins(
+                  fontSize: 15, fontWeight: FontWeight.bold)),
+          content: SizedBox(
+            width: 400,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                      controller: qCtrl,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                          labelText: 'Question',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)))),
+                  const SizedBox(height: 12),
+                  ...List.generate(4, (i) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Radio<int>(
+                            value: i,
+                            groupValue: correctIdx,
+                            activeColor: Colors.green,
+                            onChanged: (v) =>
+                                setDialogState(() => correctIdx = v ?? 0),
+                          ),
+                          Text("${String.fromCharCode(65 + i)}) ",
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          Expanded(
+                            child: TextField(
+                                controller: optCtrls[i],
+                                decoration: InputDecoration(
+                                    hintText:
+                                        'Option ${String.fromCharCode(65 + i)}',
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 8),
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8)))),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  Text("(Select the correct answer)",
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel")),
+            ElevatedButton(
+              onPressed: () {
+                if (qCtrl.text.isEmpty || optCtrls.any((c) => c.text.isEmpty)) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text("Fill the question and all 4 options.")));
+                  return;
+                }
+                onAdd({
+                  'question': qCtrl.text.trim(),
+                  'options': optCtrls.map((c) => c.text.trim()).toList(),
+                  'correct': correctIdx,
+                });
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white),
+              child: const Text("Add"),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🧪 CREATE EXPERIMENT
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _showCreateExperimentDialog() async {
+    if (_classes.isEmpty) return;
+    final selectedClass = _classes[_selectedClassIndex];
+
+    final titleCtrl = TextEditingController();
+    final subjectCtrl = TextEditingController();
+    final objectiveCtrl = TextEditingController();
+    final materialsCtrl = TextEditingController();
+    final procedureCtrl = TextEditingController();
+    final outcomeCtrl = TextEditingController();
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(children: [
+          const Icon(Icons.science_rounded, color: Colors.orange),
+          const SizedBox(width: 10),
+          Text("New Experiment: $selectedClass",
+              style: GoogleFonts.poppins(
+                  fontSize: 15, fontWeight: FontWeight.bold)),
+        ]),
+        content: SizedBox(
+          width: 500,
+          height: 450,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _styledField(subjectCtrl, 'Subject', Icons.book),
+                const SizedBox(height: 10),
+                _styledField(titleCtrl, 'Experiment Title', Icons.science),
+                const SizedBox(height: 10),
+                _styledField(objectiveCtrl, 'Objective', Icons.flag_outlined,
+                    maxLines: 2),
+                const SizedBox(height: 10),
+                _styledField(materialsCtrl, 'Materials Required',
+                    Icons.inventory_2_outlined,
+                    maxLines: 3),
+                const SizedBox(height: 10),
+                _styledField(
+                    procedureCtrl, 'Procedure (Steps)', Icons.list_alt_rounded,
+                    maxLines: 4),
+                const SizedBox(height: 10),
+                _styledField(
+                    outcomeCtrl, 'Expected Outcome', Icons.check_circle_outline,
+                    maxLines: 2),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.publish_rounded, size: 18),
+            label: const Text("Publish Experiment"),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            onPressed: () async {
+              if (titleCtrl.text.isEmpty || subjectCtrl.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Title and Subject are required.")));
+                return;
+              }
+              await FirebaseFirestore.instance.collection('experiments').add({
+                'class': selectedClass,
+                'schoolId': _teacherSchoolId,
+                'teacherName': _teacherName,
+                'subject': subjectCtrl.text.trim(),
+                'title': titleCtrl.text.trim(),
+                'objective': objectiveCtrl.text.trim(),
+                'materials': materialsCtrl.text.trim(),
+                'procedure': procedureCtrl.text.trim(),
+                'expectedOutcome': outcomeCtrl.text.trim(),
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+              if (context.mounted) Navigator.pop(context);
+              if (mounted) {
+                ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+                    content: Text(
+                        "Experiment '${titleCtrl.text}' published for $selectedClass!"),
+                    backgroundColor: Colors.orange));
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _styledField(TextEditingController ctrl, String label, IconData icon,
+          {int maxLines = 1}) =>
+      TextField(
+          controller: ctrl,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+              labelText: label,
+              prefixIcon: Icon(icon, size: 18),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12))));
+
+  // ═══════════════════════════════════════════════════════════
+  // 📒 CREATE CHAPTER NOTES
+  // ═══════════════════════════════════════════════════════════
+  Future<void> _showCreateNotesDialog() async {
+    if (_classes.isEmpty) return;
+    final selectedClass = _classes[_selectedClassIndex];
+
+    final subjectCtrl = TextEditingController();
+    final chapterCtrl = TextEditingController();
+    final contentCtrl = TextEditingController();
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(children: [
+          const Icon(Icons.note_alt_rounded, color: Colors.blue),
+          const SizedBox(width: 10),
+          Text("Chapter Notes: $selectedClass",
+              style: GoogleFonts.poppins(
+                  fontSize: 15, fontWeight: FontWeight.bold)),
+        ]),
+        content: SizedBox(
+          width: 500,
+          height: 400,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _styledField(subjectCtrl, 'Subject', Icons.book),
+                const SizedBox(height: 10),
+                _styledField(chapterCtrl, 'Chapter Title', Icons.bookmark),
+                const SizedBox(height: 10),
+                TextField(
+                    controller: contentCtrl,
+                    maxLines: 10,
+                    decoration: InputDecoration(
+                        labelText: 'Notes Content',
+                        alignLabelWithHint: true,
+                        prefixIcon: const Padding(
+                            padding: EdgeInsets.only(bottom: 160),
+                            child: Icon(Icons.edit_note, size: 18)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)))),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.publish_rounded, size: 18),
+            label: const Text("Publish Notes"),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue, foregroundColor: Colors.white),
+            onPressed: () async {
+              if (subjectCtrl.text.isEmpty || chapterCtrl.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Subject and Chapter Title are required.")));
+                return;
+              }
+              await FirebaseFirestore.instance.collection('notes').add({
+                'class': selectedClass,
+                'schoolId': _teacherSchoolId,
+                'teacherName': _teacherName,
+                'subject': subjectCtrl.text.trim(),
+                'chapter': chapterCtrl.text.trim(),
+                'content': contentCtrl.text.trim(),
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+              if (context.mounted) Navigator.pop(context);
+              if (mounted) {
+                ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+                    content: Text(
+                        "Notes for '${chapterCtrl.text}' published for $selectedClass!"),
+                    backgroundColor: Colors.blue));
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoadingClasses)
@@ -1068,6 +1542,315 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             size: 14, color: Colors.grey[400]),
                       ]),
                     ),
+                  ),
+
+                  // ═══════════════════════════════════════════════
+                  // 📝 TESTS & QUIZZES SECTION
+                  // ═══════════════════════════════════════════════
+                  const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Tests & Quizzes",
+                          style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueGrey[900])),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text("Create Test"),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12))),
+                        onPressed: _showCreateTestDialog,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('tests')
+                        .where('class',
+                            isEqualTo: _classes.isNotEmpty
+                                ? _classes[_selectedClassIndex]
+                                : '')
+                        .orderBy('createdAt', descending: true)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                              color: Colors.deepPurple.withOpacity(0.03),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: Colors.deepPurple.shade100)),
+                          child: Center(
+                              child: Text(
+                                  "No tests yet. Create your first quiz!",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.grey, fontSize: 13))),
+                        );
+                      }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: snapshot.data!.docs.length,
+                        itemBuilder: (context, index) {
+                          final data = snapshot.data!.docs[index].data()
+                              as Map<String, dynamic>;
+                          final qCount =
+                              (data['questions'] as List?)?.length ?? 0;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                    color: Colors.deepPurple.shade100)),
+                            child: Row(children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                    color: Colors.deepPurple.shade50,
+                                    shape: BoxShape.circle),
+                                child: const Icon(Icons.quiz_rounded,
+                                    color: Colors.deepPurple, size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(data['title'] ?? 'Untitled',
+                                        style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13)),
+                                    Text(
+                                        "${data['subject'] ?? ''} • $qCount Qs • ${data['duration'] ?? 15} min",
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 11,
+                                            color: Colors.grey[600])),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                    color: Colors.green.shade50,
+                                    borderRadius: BorderRadius.circular(8)),
+                                child: Text("Active",
+                                    style: TextStyle(
+                                        color: Colors.green[700],
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                            ]),
+                          );
+                        },
+                      );
+                    },
+                  ),
+
+                  // ═══════════════════════════════════════════════
+                  // 🧪 EXPERIMENTS SECTION
+                  // ═══════════════════════════════════════════════
+                  const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Experiments",
+                          style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueGrey[900])),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text("New Experiment"),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12))),
+                        onPressed: _showCreateExperimentDialog,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('experiments')
+                        .where('class',
+                            isEqualTo: _classes.isNotEmpty
+                                ? _classes[_selectedClassIndex]
+                                : '')
+                        .orderBy('createdAt', descending: true)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.03),
+                              borderRadius: BorderRadius.circular(12),
+                              border:
+                                  Border.all(color: Colors.orange.shade100)),
+                          child: Center(
+                              child: Text(
+                                  "No experiments yet. Create your first lab activity!",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.grey, fontSize: 13))),
+                        );
+                      }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: snapshot.data!.docs.length,
+                        itemBuilder: (context, index) {
+                          final data = snapshot.data!.docs[index].data()
+                              as Map<String, dynamic>;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border:
+                                    Border.all(color: Colors.orange.shade100)),
+                            child: Row(children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                    color: Colors.orange.shade50,
+                                    shape: BoxShape.circle),
+                                child: const Icon(Icons.science_rounded,
+                                    color: Colors.orange, size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(data['title'] ?? 'Untitled',
+                                        style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13)),
+                                    Text(
+                                        "${data['subject'] ?? ''} • ${data['objective'] ?? ''}",
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 11,
+                                            color: Colors.grey[600]),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis),
+                                  ],
+                                ),
+                              ),
+                            ]),
+                          );
+                        },
+                      );
+                    },
+                  ),
+
+                  // ═══════════════════════════════════════════════
+                  // 📒 CHAPTER NOTES SECTION
+                  // ═══════════════════════════════════════════════
+                  const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Chapter Notes",
+                          style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueGrey[900])),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text("New Notes"),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12))),
+                        onPressed: _showCreateNotesDialog,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('notes')
+                        .where('class',
+                            isEqualTo: _classes.isNotEmpty
+                                ? _classes[_selectedClassIndex]
+                                : '')
+                        .orderBy('createdAt', descending: true)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.03),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.blue.shade100)),
+                          child: Center(
+                              child: Text(
+                                  "No notes yet. Share study material with your class!",
+                                  style: GoogleFonts.poppins(
+                                      color: Colors.grey, fontSize: 13))),
+                        );
+                      }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: snapshot.data!.docs.length,
+                        itemBuilder: (context, index) {
+                          final data = snapshot.data!.docs[index].data()
+                              as Map<String, dynamic>;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border:
+                                    Border.all(color: Colors.blue.shade100)),
+                            child: Row(children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    shape: BoxShape.circle),
+                                child: const Icon(Icons.note_alt_rounded,
+                                    color: Colors.blue, size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(data['chapter'] ?? 'Untitled',
+                                        style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13)),
+                                    Text(
+                                        "${data['subject'] ?? ''} • By ${data['teacherName'] ?? ''}",
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 11,
+                                            color: Colors.grey[600])),
+                                  ],
+                                ),
+                              ),
+                            ]),
+                          );
+                        },
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 30),
