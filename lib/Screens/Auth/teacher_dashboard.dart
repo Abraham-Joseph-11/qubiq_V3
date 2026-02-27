@@ -86,6 +86,22 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   DateTime? _selectedDueDate;
   String _hintType = 'none'; // 'none', 'text', 'image'
 
+  // ✅ APP ACCESS CHECKLIST
+  final List<String> _allAvailableApps = [
+    'Qubiq Music', 'Neural Chat', 'Sonic Lab', 'Vision Forge',
+    'Word', 'PowerPoint', 'Excel',
+    'AI Word', 'AI PowerPoint', 'AI Excel',
+    'Python IDE', 'Block Python', 'Vibe Python',
+    'Java IDE', 'Block Java', 'Vibe Java',
+    'Emmi Lite', 'Emmi Vibe Coding', 'Emmi Core', 'Little Emmi', 'Drone Tuning',
+    'Image Recognition', 'Voice Recognition', 'Pose Training',
+    'Qubiq Studio',
+    'English', "Math's", 'IT', 'Social Science', 'Science',
+    'AR Studio'
+  ];
+  List<String> _allowedAppsForCurrentClass = [];
+  bool _isLoadingAppPermissions = false;
+
   @override
   void initState() {
     super.initState();
@@ -112,6 +128,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             }
             _isLoadingClasses = false;
           });
+          
+          if (_classes.isNotEmpty) {
+             _fetchAppPermissions();
+          }
         }
       } catch (e) {
         debugPrint("Error fetching teacher details: $e");
@@ -159,6 +179,81 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Gallery Error: $e"), backgroundColor: Colors.red));
+    }
+  }
+
+  // --- FETCH & SAVE CLASS APP PERMISSIONS ---
+  Future<void> _fetchAppPermissions() async {
+     if (_classes.isEmpty) return;
+     setState(() {
+       _isLoadingAppPermissions = true;
+       _allowedAppsForCurrentClass = [];
+     });
+     
+     String selectedClass = _classes[_selectedClassIndex];
+     
+     // 🔧 FIX: Normalize class name to match Student Dashboard query pattern (e.g. "Class 5-A")
+     if (!selectedClass.trim().startsWith("Class")) {
+       selectedClass = "Class $selectedClass";
+     }
+     
+     try {
+       final doc = await FirebaseFirestore.instance.collection('classes').doc(selectedClass).get();
+       
+       if (doc.exists && doc.data()!.containsKey('approvedApps')) {
+          setState(() {
+            _allowedAppsForCurrentClass = List<String>.from(doc.data()!['approvedApps']);
+          });
+       } else {
+          // If no explicitly approved apps, default to empty list (none accessible)
+          setState(() {
+            _allowedAppsForCurrentClass = [];
+          });
+       }
+     } catch (e) {
+       debugPrint("Error fetching app permissions: $e");
+     } finally {
+       if (mounted) {
+         setState(() => _isLoadingAppPermissions = false);
+       }
+     }
+  }
+
+  void _toggleAppPermission(String appName, bool isAllowed) {
+    setState(() {
+       if (isAllowed) {
+         if (!_allowedAppsForCurrentClass.contains(appName)) _allowedAppsForCurrentClass.add(appName);
+       } else {
+         _allowedAppsForCurrentClass.remove(appName);
+       }
+    });
+  }
+
+  Future<void> _saveAppPermissions() async {
+    if (_classes.isEmpty) return;
+    String selectedClass = _classes[_selectedClassIndex];
+    
+    // 🔧 FIX: Normalize class name to match Student Dashboard query pattern (e.g. "Class 5-A")
+    if (!selectedClass.trim().startsWith("Class")) {
+      selectedClass = "Class $selectedClass";
+    }
+    
+    // Show a small loading indicator or temporary disablement via state if desired.
+    // For simplicity, we just execute and show a SnackBar on success.
+    try {
+      await FirebaseFirestore.instance.collection('classes').doc(selectedClass).set({
+         'approvedApps': _allowedAppsForCurrentClass,
+         'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Permissions saved successfully!"), backgroundColor: Colors.green));
+      }
+    } catch (e) {
+      debugPrint("Error saving permissions: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error updating app permissions"), backgroundColor: Colors.red));
+      }
     }
   }
 
@@ -1675,8 +1770,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       itemBuilder: (context, index) {
                         final isSelected = index == _selectedClassIndex;
                         return GestureDetector(
-                          onTap: () =>
-                              setState(() => _selectedClassIndex = index),
+                          onTap: () {
+                              setState(() => _selectedClassIndex = index);
+                              _fetchAppPermissions();
+                          },
                           child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(
@@ -2156,7 +2253,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 30),
                   Text("Create Assignment",
                       style: GoogleFonts.poppins(
                           fontSize: 20,
@@ -2191,6 +2287,91 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   const SizedBox(height: 16),
 
                   _buildProjectCreatorCard(),
+
+                  const SizedBox(height: 30),
+                  
+                  // 🛡️ CLASS APP PERMISSIONS CHECKBOX LIST
+                  Row(
+                    children: [
+                      const Icon(Icons.security, color: Colors.blueGrey, size: 28),
+                      const SizedBox(width: 10),
+                      Text("Class App Permissions",
+                          style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueGrey[900])),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text("Select which apps the students in ${_classes.isNotEmpty ? _classes[_selectedClassIndex] : 'this class'} can see.",
+                      style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[600])),
+                  const SizedBox(height: 16),
+                  
+                  _isLoadingAppPermissions 
+                    ? const Center(child: CircularProgressIndicator())
+                    : Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                           color: Colors.white,
+                           borderRadius: BorderRadius.circular(16),
+                           border: Border.all(color: Colors.grey.shade300)
+                        ),
+                        child: Wrap(
+                           spacing: 12,
+                           runSpacing: 12,
+                           children: _allAvailableApps.map((appName) {
+                              final isAllowed = _allowedAppsForCurrentClass.contains(appName);
+                              return IntrinsicWidth(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  decoration: BoxDecoration(
+                                     color: isAllowed ? Colors.green.shade50 : Colors.grey.shade50,
+                                     borderRadius: BorderRadius.circular(10),
+                                     border: Border.all(color: isAllowed ? Colors.green.shade300 : Colors.grey.shade300)
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Checkbox(
+                                        value: isAllowed,
+                                        activeColor: Colors.green,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                        onChanged: (val) {
+                                           if (val != null) {
+                                              _toggleAppPermission(appName, val);
+                                           }
+                                        },
+                                      ),
+                                      Text(appName, style: GoogleFonts.poppins(
+                                         fontSize: 13,
+                                         fontWeight: isAllowed ? FontWeight.w600 : FontWeight.w400,
+                                         color: isAllowed ? Colors.green[800] : Colors.grey[700],
+                                      )),
+                                      const SizedBox(width: 8)
+                                    ],
+                                  ),
+                                ),
+                              );
+                           }).toList(),
+                        ),
+                      ),
+                  if (!_isLoadingAppPermissions)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: ElevatedButton.icon(
+                          onPressed: _saveAppPermissions,
+                          icon: const Icon(Icons.save_rounded, color: Colors.white, size: 20),
+                          label: Text("Save Changes", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                    ),
 
                   const SizedBox(height: 30),
 

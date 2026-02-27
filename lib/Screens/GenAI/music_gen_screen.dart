@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'web_audio_stub.dart' if (dart.library.html) 'web_audio_impl.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -19,6 +21,20 @@ class _MusicGenScreenState extends State<MusicGenScreen> {
   bool _isLoading = false;
   String? _status;
   String? _filePath;
+  String? _webAudioUrl; // For web audio playback
+
+  // Platform-specific helpers
+  Future<void> _saveAudioFile(List<int> bytes, String path) async {
+    // Only used on non-web platforms
+    final file = File(path);
+    await file.writeAsBytes(bytes);
+    return;
+  }
+
+  void _playWebAudio(String url) {
+    // Only used on web
+    playWebAudioPlayer(url);
+  }
 
   // 🔴 PASTE YOUR ELEVENLABS KEY HERE
   final String _apiKey = 'sk_dfc11444457c79cef52e64def09bd1858a885e4a492d5a0f';
@@ -53,14 +69,25 @@ class _MusicGenScreenState extends State<MusicGenScreen> {
       );
 
       if (response.statusCode == 200) {
-        final directory = await getTemporaryDirectory();
-        final file = File('${directory.path}/sound_effect.mp3');
-        await file.writeAsBytes(response.bodyBytes);
-
-        setState(() {
-          _filePath = file.path;
-          _status = "Sound Ready! 🔊";
-        });
+        if (kIsWeb) {
+          // Convert bytes to base64 and create a data URL
+          final base64Audio = base64Encode(response.bodyBytes);
+          final dataUrl = 'data:audio/mp3;base64,$base64Audio';
+          setState(() {
+            _webAudioUrl = dataUrl;
+            _filePath = null;
+            _status = "Sound Ready! 🔊";
+          });
+        } else {
+          final directory = await getTemporaryDirectory();
+          final filePath = '${directory.path}/sound_effect.mp3';
+          await _saveAudioFile(response.bodyBytes, filePath);
+          setState(() {
+            _filePath = filePath;
+            _webAudioUrl = null;
+            _status = "Sound Ready! 🔊";
+          });
+        }
       } else {
         // Handle common errors
         String errorMsg = "Error: ${response.statusCode}";
@@ -77,8 +104,14 @@ class _MusicGenScreenState extends State<MusicGenScreen> {
   }
 
   Future<void> _playAudio() async {
-    if (_filePath != null) {
-      await _audioPlayer.play(DeviceFileSource(_filePath!));
+    if (kIsWeb) {
+      if (_webAudioUrl != null) {
+        _playWebAudio(_webAudioUrl!);
+      }
+    } else {
+      if (_filePath != null) {
+        await _audioPlayer.play(DeviceFileSource(_filePath!));
+      }
     }
   }
 
@@ -109,7 +142,7 @@ class _MusicGenScreenState extends State<MusicGenScreen> {
               style: GoogleFonts.poppins(color: Colors.white70, fontSize: 16),
             ),
             const SizedBox(height: 30),
-            if (_filePath != null)
+            if (_filePath != null || (kIsWeb && _webAudioUrl != null))
               ElevatedButton.icon(
                 icon: const Icon(Icons.play_arrow),
                 label: const Text("Play FX"),

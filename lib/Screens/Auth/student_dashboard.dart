@@ -52,6 +52,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
   String _studentClass =
       "Loading..."; // Starts as loading to prevent empty queries
 
+  List<String>? _approvedApps; // ✅ Added to hold allowed apps
+
+
   Timer? _internetCheckTimer;
   bool _isOffline = false;
 
@@ -215,11 +218,43 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
             } else {
               debugPrint("⚠️ No 'schoolId' field in user document.");
             }
+
+            // Fetch approved apps for the class
+            if (_studentClass != "No Class Assigned" && _studentClass != "Loading...") {
+               _fetchApprovedApps();
+            }
           });
         }
       } catch (e) {
         debugPrint("🔥 ERROR: $e");
       }
+    }
+  }
+
+  Future<void> _fetchApprovedApps() async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('classes').doc(_studentClass).get();
+      
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>?;
+        if (data != null && data.containsKey('approvedApps')) {
+           if (mounted) {
+             setState(() {
+                _approvedApps = List<String>.from(data['approvedApps']);
+             });
+           }
+           return; 
+        }
+      }
+      
+      // Fallback if doc doesn't exist or doesn't have the field
+      if (mounted) {
+         setState(() {
+            _approvedApps = []; // Explicitly empty 
+         });
+      }
+    } catch (e) {
+      debugPrint("Error fetching approved apps: $e");
     }
   }
 
@@ -687,6 +722,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
           name: "10. AR Tools", color: Colors.pinkAccent, items: arApps),
     ];
 
+    // Filter categories based on approved apps
+    final List<_CategoryTile> filteredCategories = _approvedApps == null
+        ? categories // If null, we haven't loaded permissions yet (show all or hide all depending on preference, currently hiding all below via loading check)
+        : categories.map((cat) {
+            final allowedItems = cat.items.where((app) => _approvedApps!.contains(app.title)).toList();
+            return _CategoryTile(name: cat.name, color: cat.color, items: allowedItems);
+          }).where((cat) => cat.items.isNotEmpty).toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton.extended(
@@ -737,8 +780,24 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
                   _buildExperimentsList(),
 
                   const SizedBox(height: 30),
-                  ...categories.map(
-                      (category) => _buildCategorySection(category, isMobile)),
+                  
+                  if (_approvedApps == null)
+                     const Padding(
+                       padding: EdgeInsets.all(40.0),
+                       child: Center(child: CircularProgressIndicator()),
+                     )
+                  else if (filteredCategories.isEmpty)
+                     Padding(
+                       padding: const EdgeInsets.all(40.0),
+                       child: Center(
+                         child: Text("No apps have been approved for $_studentClass yet.", 
+                           style: GoogleFonts.poppins(color: Colors.grey, fontSize: 16)),
+                       ),
+                     )
+                  else
+                     ...filteredCategories.map(
+                         (category) => _buildCategorySection(category, isMobile)),
+                         
                   const SizedBox(height: 60),
                 ],
               ),
