@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:little_emmi/Screens/teachable/iframe_registry.dart';
 
 class WebViewScreen extends StatefulWidget {
   const WebViewScreen({super.key});
@@ -35,6 +38,35 @@ class _WebViewScreenState extends State<WebViewScreen> {
   void initState() {
     super.initState();
     _initApp();
+
+    if (kIsWeb) {
+      registerIframe(
+          'antipython-web-view', "assets/assets/antipython_web/index.html");
+      _injectAuthTokenWeb();
+    }
+  }
+
+  void _injectAuthTokenWeb() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final token = await user.getIdToken();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final schoolId = doc.data()?['schoolId'] ?? '';
+
+      // Delay to ensure the iframe has mounted and is ready to receive messages
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          sendAuthToWebIframe(token!, schoolId);
+        }
+      });
+    } catch (e) {
+      debugPrint("Error fetching auth for web iframe: $e");
+    }
   }
 
   void _log(String message) {
@@ -132,33 +164,53 @@ class _WebViewScreenState extends State<WebViewScreen> {
         children: [
           Container(
             color: Colors.white, // Background to prevent transparency issues
-            child: InAppWebView(
-              key: webViewKey,
-              initialUrlRequest: URLRequest(
-                url: kIsWeb
-                    ? WebUri("assets/assets/antipython_web/index.html")
-                    : WebUri("http://127.0.0.1:8084/index.html"),
-              ),
-              initialSettings: settings,
-              onWebViewCreated: (controller) {
-                webViewController = controller;
-              },
-              onPermissionRequest: (controller, request) async {
-                return PermissionResponse(
-                  resources: request.resources,
-                  action: PermissionResponseAction.GRANT,
-                );
-              },
-              onConsoleMessage: (controller, consoleMessage) {
-                debugPrint("WEBVIEW: ${consoleMessage.message}");
-              },
-              onLoadError: (controller, url, code, message) {
-                _log("WebView Load Error: $code, $message");
-              },
-              onLoadHttpError: (controller, url, statusCode, description) {
-                _log("WebView HTTP Error: $statusCode, $description");
-              },
-            ),
+            child: kIsWeb
+                ? const HtmlElementView(viewType: 'antipython-web-view')
+                : InAppWebView(
+                    key: webViewKey,
+                    initialUrlRequest: URLRequest(
+                      url: WebUri("http://127.0.0.1:8084/index.html"),
+                    ),
+                    initialSettings: settings,
+                    onWebViewCreated: (controller) {
+                      webViewController = controller;
+                    },
+                    onPermissionRequest: (controller, request) async {
+                      return PermissionResponse(
+                        resources: request.resources,
+                        action: PermissionResponseAction.GRANT,
+                      );
+                    },
+                    onConsoleMessage: (controller, consoleMessage) {
+                      debugPrint("WEBVIEW: ${consoleMessage.message}");
+                    },
+                    onLoadError: (controller, url, code, message) {
+                      _log("WebView Load Error: $code, $message");
+                    },
+                    onLoadHttpError:
+                        (controller, url, statusCode, description) {
+                      _log("WebView HTTP Error: $statusCode, $description");
+                    },
+                    onLoadStop: (controller, url) async {
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user != null) {
+                        try {
+                          final token = await user.getIdToken();
+                          final doc = await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(user.uid)
+                              .get();
+                          final schoolId = doc.data()?['schoolId'] ?? '';
+                          final script =
+                              "window.EMMI_AUTH_TOKEN = '$token'; window.EMMI_SCHOOL_ID = '$schoolId'; window.EMMI_API_BASE_URL = 'https://edu-ai-backend-vl7s.onrender.com';";
+                          await controller.evaluateJavascript(source: script);
+                        } catch (e) {
+                          debugPrint(
+                              "Error injecting auth in PyVibe WebView: $e");
+                        }
+                      }
+                    },
+                  ),
           ),
           Positioned(
             top: 10,

@@ -12,6 +12,8 @@ import 'package:shelf_static/shelf_static.dart';
 import 'package:path/path.dart' as p;
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:little_emmi/Screens/teachable/iframe_registry.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EmmiLiteScreen extends StatefulWidget {
   const EmmiLiteScreen({super.key});
@@ -34,6 +36,30 @@ class _EmmiLiteScreenState extends State<EmmiLiteScreen> {
 
     if (kIsWeb) {
       registerIframe('emmi-lite-web-view', "assets/emmi_html/index.html");
+      _injectAuthTokenWeb();
+    }
+  }
+
+  void _injectAuthTokenWeb() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final token = await user.getIdToken();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final schoolId = doc.data()?['schoolId'] ?? '';
+
+      // Delay to ensure the iframe has mounted and is ready to receive messages
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          sendAuthToWebIframe(token!, schoolId);
+        }
+      });
+    } catch (e) {
+      debugPrint("Error fetching auth for web iframe: $e");
     }
   }
 
@@ -179,6 +205,27 @@ class _EmmiLiteScreenState extends State<EmmiLiteScreen> {
                             ),
                             onWebViewCreated: (controller) {
                               webViewController = controller;
+                            },
+                            onLoadStop: (controller, url) async {
+                              final user = FirebaseAuth.instance.currentUser;
+                              if (user != null) {
+                                try {
+                                  final token = await user.getIdToken();
+                                  final doc = await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(user.uid)
+                                      .get();
+                                  final schoolId =
+                                      doc.data()?['schoolId'] ?? '';
+                                  final script =
+                                      "window.EMMI_AUTH_TOKEN = '$token'; window.EMMI_SCHOOL_ID = '$schoolId'; window.EMMI_API_BASE_URL = 'https://edu-ai-backend-vl7s.onrender.com';";
+                                  await controller.evaluateJavascript(
+                                      source: script);
+                                } catch (e) {
+                                  debugPrint(
+                                      "Error injecting auth in WebView: $e");
+                                }
+                              }
                             },
                             onConsoleMessage: (controller, consoleMessage) {
                               if (kDebugMode) {

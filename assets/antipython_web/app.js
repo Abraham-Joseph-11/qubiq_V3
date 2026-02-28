@@ -166,39 +166,49 @@ async function runPython() {
 
 runBtn.addEventListener('click', runPython);
 
-// OpenRouter API Integration
-async function callOpenRouter(prompt) {
-    const apiKey = localStorage.getItem('openrouter_api_key');
-    const model = localStorage.getItem('openrouter_model') || 'arcee-ai/trinity-large-preview:free';
-
-    if (!apiKey) {
-        return "Please set your OpenRouter API key in Settings to use the AI Assistant!";
+// Proxy API Integration (Previously OpenRouter)
+async function callProxyChat(prompt) {
+    if (!window.EMMI_AUTH_TOKEN) {
+        return "Not authenticated via QubiQ app. Cannot use the AI Assistant.";
     }
 
+    const systemPrompt = "You are a Python tutor for students using a browser-based Python environment (Skulpt). \n\nRULES:\n1. Keep answers SHORT and CONCISE.\n2. Provide RUNNABLE Python code compatible with Skulpt.\n3. Supported Libraries: standard libs, `turtle`, `matplotlib.pyplot` (plots show in modal), `numpy` (mocked), `pandas` (mocked), `cv2` (Webcam mock), `pyttsx3` (TTS mock), `speech_recognition` (STT mock).\n4. Key Limitations: NO `pip install`, NO `subprocess`, NO `time.sleep()` (blocks browser), NO `sys.stdin` (use `input()` instead).\n5. For `cv2`: Use `cv2.VideoCapture(0)` to capture frames.\n6. For Speech: Use `pyttsx3.init()` and `speech_recognition.Recognizer()`.\n\nAlways wrap code in ```python blocks.";
+
+    const apiUrl = `${window.EMMI_API_BASE_URL || 'https://edu-ai-backend-vl7s.onrender.com'}/proxy/chat`;
+
     try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        const response = await fetch(apiUrl, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${apiKey}`,
+                "Authorization": `Bearer ${window.EMMI_AUTH_TOKEN}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "model": model,
-                "messages": [
-                    { "role": "system", "content": "You are a Python tutor for students using a browser-based Python environment (Skulpt). \n\nRULES:\n1. Keep answers SHORT and CONCISE.\n2. Provide RUNNABLE Python code compatible with Skulpt.\n3. Supported Libraries: standard libs, `turtle`, `matplotlib.pyplot` (plots show in modal), `numpy` (mocked), `pandas` (mocked), `cv2` (Webcam mock), `pyttsx3` (TTS mock), `speech_recognition` (STT mock).\n4. Key Limitations: NO `pip install`, NO `subprocess`, NO `time.sleep()` (blocks browser), NO `sys.stdin` (use `input()` instead).\n5. For `cv2`: Use `cv2.VideoCapture(0)` to capture frames.\n6. For Speech: Use `pyttsx3.init()` and `speech_recognition.Recognizer()`.\n\nAlways wrap code in ```python blocks." },
-                    { "role": "user", "content": prompt }
-                ]
+                "prompt": `${systemPrompt}\n\nUser: ${prompt}`,
+                "botType": "pyVibe",
+                "schoolId": window.EMMI_SCHOOL_ID || ""
             })
         });
 
         const data = await response.json();
-        if (data.error) {
-            return `AI Error: ${data.error.message || "Unknown error"}`;
+        if (data.error || data.details?.error) {
+            const errDetail = data.details?.error?.message || data.error || "Unknown error";
+            return `AI Error: ${errDetail}`;
         }
-        return data.choices[0].message.content;
+
+        // Proxy returns the direct string, { response: ... }, or { reply: ... }
+        if (data.reply) {
+            return data.reply;
+        } else if (data.response) {
+            return data.response;
+        } else if (data.choices && data.choices.length > 0) {
+            return data.choices[0].message.content;
+        }
+
+        return typeof data === 'string' ? data : JSON.stringify(data);
     } catch (error) {
-        console.error("OpenRouter Error:", error);
-        return "Sorry, I had trouble connecting to the AI service. Please check your API key and connection.";
+        console.error("Proxy Chat Error:", error);
+        return "Sorry, I had trouble connecting to the AI service. Please check your connection.";
     }
 }
 
@@ -273,7 +283,7 @@ async function handleChat() {
     const loadingMsg = messages[messages.length - 1];
     loadingMsg.id = `loading-${loadingId}`;
 
-    const aiResponse = await callOpenRouter(text);
+    const aiResponse = await callProxyChat(text);
 
     // Remove loading and show real response
     loadingMsg.remove();
