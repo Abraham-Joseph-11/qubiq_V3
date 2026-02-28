@@ -272,6 +272,7 @@ flutter:
     - assets/word_web/word/
     - assets/web/dist/
     - assets/web/dist/assets/
+    - assets/powerpoint_no_ai/
     - assets/teachable/image/
     - assets/teachable/image/assets/
     - assets/teachable/audio/

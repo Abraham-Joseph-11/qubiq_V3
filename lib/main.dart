@@ -35,6 +35,8 @@ import 'package:little_emmi/screens/antipython/webview_screen.dart'
 import 'package:little_emmi/screens/pyblock/webview_screen.dart';
 import 'package:little_emmi/Screens/powerpoint_webview/webview_screen.dart'
     as powerpoint;
+import 'package:little_emmi/Screens/powerpoint_no_ai_webview/webview_screen.dart'
+    as powerpoint_no_ai;
 import 'package:little_emmi/Screens/excel_webview_screen.dart';
 import 'package:little_emmi/Screens/word_webview_screen.dart';
 import 'package:little_emmi/Screens/unknown_route_screen.dart';
@@ -77,6 +79,7 @@ class QubiQApp extends StatelessWidget {
           '/app/antipython': (_) => const antipython.WebViewScreen(),
           '/app/pyblock': (_) => const PyBlocksWebview(),
           '/presentation': (_) => const powerpoint.PresentationWebViewScreen(),
+          '/presentation_normal': (_) => const powerpoint_no_ai.PresentationNoAiWebViewScreen(),
           '/excel': (_) => const ExcelWebViewScreen(),
           '/word': (_) => const WordWebViewScreen(),
           '/app/robot_workspace': (_) => const Scaffold(

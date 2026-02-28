@@ -474,7 +474,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
           title: 'PowerPoint',
           subtitle: 'Create Slides',
           imagePath: 'assets/images/ppt.png',
-          onTap: () => Navigator.pushNamed(context, '/presentation')),
+          onTap: () => Navigator.pushNamed(context, '/presentation_normal')),
       DashboardItem(
           title: 'Excel',
           subtitle: 'Spreadsheets',
@@ -491,9 +491,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
           onTap: () => _showComingSoon(context, "AI Powered Word")),
       DashboardItem(
           title: 'AI PowerPoint',
-          subtitle: 'Coming Soon',
+          subtitle: 'Create AI Slides',
           imagePath: 'assets/images/ppt.png',
-          onTap: () => _showComingSoon(context, "AI Powered PowerPoint")),
+          onTap: () => Navigator.pushNamed(context, '/presentation')),
       DashboardItem(
           title: 'AI Excel',
           subtitle: 'Coming Soon',
