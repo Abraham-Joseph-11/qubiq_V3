@@ -167,8 +167,37 @@ async function runPython() {
 runBtn.addEventListener('click', runPython);
 
 // Proxy API Integration (Previously OpenRouter)
+let cachedAuthToken = null;
+let cachedSchoolId = "";
+
+// Listen for token broadcast from Flutter Web wrapper
+window.addEventListener('message', function (event) {
+    try {
+        if (event.data && typeof event.data === 'string') {
+            const data = JSON.parse(event.data);
+            if (data.type === 'emmi_auth') {
+                cachedAuthToken = data.token;
+                cachedSchoolId = data.schoolId;
+                window.EMMI_AUTH_TOKEN = data.token;
+                window.EMMI_SCHOOL_ID = data.schoolId;
+            }
+        }
+    } catch (e) { }
+});
+
 async function callProxyChat(prompt) {
-    if (!window.EMMI_AUTH_TOKEN) {
+    // Attempt to pull from window, cache, or parent explicitly
+    let token = window.EMMI_AUTH_TOKEN || cachedAuthToken;
+    let schoolId = window.EMMI_SCHOOL_ID || cachedSchoolId || "";
+
+    if (!token) {
+        try {
+            token = localStorage.getItem('EMMI_AUTH_TOKEN') || window.parent.localStorage.getItem('EMMI_AUTH_TOKEN');
+            schoolId = localStorage.getItem('EMMI_SCHOOL_ID') || window.parent.localStorage.getItem('EMMI_SCHOOL_ID') || "";
+        } catch (e) { }
+    }
+
+    if (!token) {
         return "Not authenticated via QubiQ app. Cannot use the AI Assistant.";
     }
 
@@ -180,13 +209,13 @@ async function callProxyChat(prompt) {
         const response = await fetch(apiUrl, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${window.EMMI_AUTH_TOKEN}`,
+                "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 "prompt": `${systemPrompt}\n\nUser: ${prompt}`,
                 "botType": "pyVibe",
-                "schoolId": window.EMMI_SCHOOL_ID || ""
+                "schoolId": schoolId
             })
         });
 
@@ -196,16 +225,31 @@ async function callProxyChat(prompt) {
             return `AI Error: ${errDetail}`;
         }
 
-        // Proxy returns the direct string, { response: ... }, or { reply: ... }
+        // Parse proxy response properly 
+        let answerText = "";
         if (data.reply) {
-            return data.reply;
+            answerText = data.reply;
         } else if (data.response) {
-            return data.response;
+            answerText = data.response;
         } else if (data.choices && data.choices.length > 0) {
-            return data.choices[0].message.content;
+            answerText = data.choices[0].message.content;
+        } else {
+            answerText = typeof data === 'string' ? data : JSON.stringify(data);
         }
 
-        return typeof data === 'string' ? data : JSON.stringify(data);
+        // Sometimes the reply field itself is mistakenly stringified JSON from deep wrapper
+        try {
+            const innerJson = JSON.parse(answerText);
+            if (innerJson && innerJson.reply) {
+                answerText = innerJson.reply;
+            } else if (innerJson && innerJson.response) {
+                answerText = innerJson.response;
+            }
+        } catch (e) {
+            // It's just a normal string, do nothing
+        }
+
+        return answerText;
     } catch (error) {
         console.error("Proxy Chat Error:", error);
         return "Sorry, I had trouble connecting to the AI service. Please check your connection.";
